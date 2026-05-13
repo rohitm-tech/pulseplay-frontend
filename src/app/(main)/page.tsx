@@ -3,9 +3,10 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Header } from '@/components/Header';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, MessageCircle, Radio, Sparkles, Trophy, Zap } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { siteInShell } from '@/lib/site-layout';
 
 export default function LandingPage() {
   const [mouse, setMouse] = useState({ x: 0, y: 0 });
@@ -33,14 +34,13 @@ export default function LandingPage() {
   const features = [
     { icon: <Radio className="h-5 w-5" />, title: 'Live wire', body: 'Scores, commentary, and rooms synced over Socket.IO.' },
     { icon: <MessageCircle className="h-5 w-5" />, title: 'Fan mesh', body: 'Match rooms, typing hints, emoji reactions — monochrome UI.' },
-    { icon: <Sparkles className="h-5 w-5" />, title: 'AI layer', body: 'Insights and explainers; swap in your model when ready.' },
+    { icon: <Sparkles className="h-5 w-5" />, title: 'AI layer', body: 'Gemini summaries, highlights, and insight cards from live CricAPI data.' },
     { icon: <Trophy className="h-5 w-5" />, title: 'XP ladder', body: 'Polls, streaks, and leaderboards tuned for rivalry nights.' },
   ];
 
   return (
     <div className="min-h-screen bg-ink-50 text-ink-900 dark:bg-ink-950 dark:text-ink-50">
-      <Header />
-      <main className="relative pt-16">
+      <main className="relative pt-28">
         <section className="relative overflow-hidden border-b border-ink-200/60 dark:border-ink-800/60">
           <div className="pointer-events-none absolute inset-0">
             <div className="absolute inset-0 opacity-[0.35] dark:opacity-[0.12]">
@@ -53,7 +53,7 @@ export default function LandingPage() {
             <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-ink-50 to-transparent dark:from-ink-950 dark:to-transparent" />
           </div>
 
-          <div className="relative mx-auto max-w-6xl px-4 pb-24 pt-20 sm:px-6 sm:pt-28">
+          <div className={cn('relative pb-24', siteInShell)}>
             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
               <p className="scroll-reveal mb-6 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white/80 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink-500 shadow-soft backdrop-blur dark:border-ink-800 dark:bg-ink-900/60 dark:text-ink-400">
                 <span className="relative flex h-2 w-2">
@@ -104,7 +104,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+        <section className={cn('py-20', siteInShell)}>
           <div className="scroll-reveal mb-12 max-w-2xl">
             <h2 className="text-3xl font-semibold tracking-tight">Built for noisy stadium nights</h2>
             <p className="mt-3 text-ink-600 dark:text-ink-400">Hover cards lift subtly; motion stays purposeful, not loud.</p>
@@ -131,7 +131,7 @@ export default function LandingPage() {
         </section>
 
         <section className="border-t border-ink-200/60 bg-ink-900 py-20 text-ink-50 dark:border-ink-800/60 dark:bg-ink-100 dark:text-ink-950">
-          <div className="mx-auto max-w-6xl px-4 text-center sm:px-6">
+          <div className={cn('py-20 text-center', siteInShell)}>
             <h2 className="scroll-reveal text-3xl font-semibold tracking-tight">Ready when the toss lands</h2>
             <p className="scroll-reveal mx-auto mt-4 max-w-xl text-sm text-ink-300 dark:text-ink-600">
               Sign in, pick a match, and let the monochrome canvas carry the energy.

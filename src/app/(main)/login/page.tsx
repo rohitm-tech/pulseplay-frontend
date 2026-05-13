@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { useAppDispatch } from '@/store/hooks';
 import { setCredentials } from '@/store/auth/authSlice';
 import { loginRequest } from '@/services/authApi';
-import { Header } from '@/components/Header';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
@@ -35,8 +35,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-      <Header />
-      <main className="mx-auto max-w-md px-4 pb-24 pt-28">
+      <PageContainer column="narrow">
         <Card className="border-ink-200/80 dark:border-ink-800/80">
           <CardTitle>Sign in</CardTitle>
           <CardDescription className="mt-2">Access token + refresh token issued on success.</CardDescription>
@@ -44,7 +43,7 @@ export default function LoginPage() {
             <div>
               <label className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Email</label>
               <input
-                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
+                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -54,7 +53,7 @@ export default function LoginPage() {
             <div>
               <label className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Password</label>
               <input
-                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
+                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -72,7 +71,7 @@ export default function LoginPage() {
             </Link>
           </p>
         </Card>
-      </main>
+      </PageContainer>
     </div>
   );
 }

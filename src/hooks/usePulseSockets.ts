@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import { toast } from 'sonner';
 import { config } from '@/config';
+import { store } from '@/store';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setSocketStatus } from '@/store/socket/socketSlice';
 import { setLiveScore, appendCommentary } from '@/store/matches/matchesSlice';
@@ -12,7 +14,26 @@ import { upsertPoll } from '@/store/polls/pollsSlice';
 import { setLeaderboard } from '@/store/leaderboard/leaderboardSlice';
 import api from '@/lib/api';
 
-export function usePulseSockets(matchId: string | undefined) {
+function shouldToastMoment(
+  kind: string,
+  prefs: { boundaries: boolean; wickets: boolean; milestones: boolean } | undefined
+): boolean {
+  const p = prefs ?? { boundaries: true, wickets: true, milestones: true };
+  if (kind === 'SIX' || kind === 'FOUR') return p.boundaries;
+  if (kind === 'WICKET') return p.wickets;
+  if (kind === 'FIFTY' || kind === 'CENTURY' || kind === 'WIN') return p.milestones;
+  return true;
+}
+
+function burstEmojis(kind: string): string[] {
+  if (kind === 'SIX') return ['🔥', '🔥', '⚡', '🚀', '💥'];
+  if (kind === 'FOUR') return ['💨', '⚡'];
+  if (kind === 'WICKET') return ['😱', '💔'];
+  if (kind === 'WIN') return ['🏆', '🎉'];
+  return ['👏'];
+}
+
+export function usePulseSockets(matchId: string | undefined, favoriteTeam?: string | null) {
   const dispatch = useAppDispatch();
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const userName = useAppSelector((s) => s.auth.user?.name);
@@ -31,6 +52,9 @@ export function usePulseSockets(matchId: string | undefined) {
     m.on('connect', () => dispatch(setSocketStatus({ connected: true })));
     m.on('disconnect', () => dispatch(setSocketStatus({ connected: false })));
     m.emit('join_match', { matchId });
+    const team = favoriteTeam?.trim();
+    if (team) m.emit('join_team', { team });
+
     m.on('live_score_update', (payload: { matchId: string } & Record<string, unknown>) => {
       dispatch(setLiveScore({ matchId: payload.matchId, payload }));
     });
@@ -52,6 +76,21 @@ export function usePulseSockets(matchId: string | undefined) {
     m.on('fan_reaction', (payload: { matchId: string; emoji: string; ts: number }) => {
       if (payload.matchId === matchId) dispatch(pushReaction(payload));
     });
+    m.on(
+      'pulse_moment',
+      (payload: { matchId: string; kind: string; title: string; detail: string; intensity?: number }) => {
+        if (payload.matchId !== matchId) return;
+        const prefs = store.getState().auth.user?.notificationPrefs;
+        if (shouldToastMoment(payload.kind, prefs)) {
+          toast(payload.title, { description: payload.detail });
+        }
+        const emojis = burstEmojis(payload.kind);
+        const ts = Date.now();
+        emojis.forEach((emoji, i) => {
+          dispatch(pushReaction({ matchId, emoji, ts: ts + i * 40 }));
+        });
+      }
+    );
     m.on('leaderboard_update', async () => {
       try {
         const { data } = await api.get('/api/leaderboard');
@@ -75,6 +114,9 @@ export function usePulseSockets(matchId: string | undefined) {
     });
     c.on('typing', (payload: { userName?: string }) => {
       dispatch(setTyping({ room, users: payload.userName ? [payload.userName] : [] }));
+    });
+    c.on('error', (e: { message?: string }) => {
+      toast.error(e?.message ?? 'Chat error');
     });
 
     const p = io(`${base}/polls`, opts);
@@ -102,7 +144,7 @@ export function usePulseSockets(matchId: string | undefined) {
       chatRef.current = null;
       pollsRef.current = null;
     };
-  }, [accessToken, dispatch, matchId]);
+  }, [accessToken, dispatch, matchId, favoriteTeam]);
 
   const sendReaction = useCallback(
     (emoji: string) => {

@@ -1,34 +1,66 @@
 'use client';
 
+import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Header } from '@/components/Header';
+import { isAxiosError } from 'axios';
+import { PageContainer } from '@/components/layout/PageContainer';
+import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import type { MatchSummary } from '@/store/matches/matchesSlice';
+import { useAppSelector } from '@/store/hooks';
 
 export default function MatchesPage() {
-  const { data, isLoading } = useQuery({
-    queryKey: ['matches', 'live'],
+  const [forYou, setForYou] = useState(false);
+  const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const { data, isLoading, isError, error } = useQuery({
+    queryKey: ['matches', forYou ? 'for-you' : 'live'],
+    enabled: !forYou || !!accessToken,
     queryFn: async () => {
-      const res = await api.get<{ data: MatchSummary[] }>('/api/matches/live');
+      const url = forYou ? '/api/matches/feed/for-you' : '/api/matches/live';
+      const res = await api.get<{ data: MatchSummary[] }>(url);
       return res.data.data;
     },
   });
 
+  const loadErrorMessage =
+    isAxiosError(error) && error.response?.data && typeof error.response.data === 'object' && 'message' in error.response.data
+      ? String((error.response.data as { message?: string }).message)
+      : isAxiosError(error)
+        ? error.message
+        : null;
+
   return (
     <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-      <Header />
-      <main className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-6">
+      <PageContainer>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink-500 dark:text-ink-400">Live hub</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">IPL matches</h1>
             <p className="mt-2 max-w-xl text-sm text-ink-600 dark:text-ink-400">
-              CricAPI when configured; graceful mock slate otherwise. Tap a card for the full second-screen layout.
+              Live list from CricAPI (set CRIC_API_KEY on the backend). “For you” reorders by your favorite team from profile.
             </p>
           </div>
+          <div className="flex gap-2">
+            <Button type="button" size="sm" variant={forYou ? 'default' : 'outline'} onClick={() => setForYou(true)}>
+              For you
+            </Button>
+            <Button type="button" size="sm" variant={!forYou ? 'default' : 'outline'} onClick={() => setForYou(false)}>
+              All live
+            </Button>
+          </div>
         </div>
+        {isError && loadErrorMessage ? (
+          <div className="mt-8 rounded-2xl border border-red-200 bg-red-50/90 p-4 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-100">
+            {loadErrorMessage}
+          </div>
+        ) : null}
+
+        {!isLoading && !isError && (data?.length ?? 0) === 0 ? (
+          <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">No current matches returned by CricAPI right now.</p>
+        ) : null}
+
         <div className="mt-10 grid gap-4 md:grid-cols-2">
           {isLoading &&
             Array.from({ length: 4 }).map((_, i) => (
@@ -56,7 +88,7 @@ export default function MatchesPage() {
             </motion.div>
           ))}
         </div>
-      </main>
+      </PageContainer>
     </div>
   );
 }

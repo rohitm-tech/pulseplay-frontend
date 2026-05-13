@@ -6,6 +6,15 @@ export interface AuthUser {
   email: string;
   avatar?: string;
   favoriteTeam?: string;
+  favoritePlayers?: string[];
+  notificationPrefs?: {
+    boundaries: boolean;
+    wickets: boolean;
+    milestones: boolean;
+    polls: boolean;
+  };
+  followingCount?: number;
+  fanTier?: number;
   xpPoints: number;
   badges: string[];
   role: 'user' | 'admin';

@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { Header } from '@/components/Header';
 import { AuthGate } from '@/components/AuthGate';
+import { PageContainer } from '@/components/layout/PageContainer';
 import { useAppSelector } from '@/store/hooks';
 import api from '@/lib/api';
 import { toast } from 'sonner';
@@ -22,8 +22,7 @@ export default function AdminPage() {
     return (
       <AuthGate>
         <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-          <Header />
-          <main className="px-4 pb-24 pt-28 text-center text-ink-600 dark:text-ink-400">Admin only.</main>
+          <PageContainer className="text-center text-ink-600 dark:text-ink-400">Admin only.</PageContainer>
         </div>
       </AuthGate>
     );
@@ -53,8 +52,7 @@ export default function AdminPage() {
   return (
     <AuthGate>
       <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-        <Header />
-        <main className="mx-auto max-w-4xl space-y-6 px-4 pb-24 pt-28 sm:px-6">
+        <PageContainer className="space-y-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Admin</h1>
             <Button type="button" variant="ghost" onClick={() => router.push('/matches')}>
@@ -78,18 +76,18 @@ export default function AdminPage() {
             <CardDescription>Publishes over Socket.IO to match rooms.</CardDescription>
             <div className="mt-6 space-y-4">
               <input
-                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                className="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
                 value={question}
                 onChange={(e) => setQuestion(e.target.value)}
               />
               <input
-                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                className="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
                 value={matchId}
                 onChange={(e) => setMatchId(e.target.value)}
               />
               <input
                 type="datetime-local"
-                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                className="w-full rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
                 value={expires}
                 onChange={(e) => setExpires(e.target.value)}
               />
@@ -98,7 +96,7 @@ export default function AdminPage() {
               </Button>
             </div>
           </Card>
-        </main>
+        </PageContainer>
       </div>
     </AuthGate>
   );
