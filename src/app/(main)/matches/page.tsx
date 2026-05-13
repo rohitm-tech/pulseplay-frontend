@@ -1,26 +1,43 @@
 'use client';
 
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { isAxiosError } from 'axios';
+import { RefreshCw } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import type { MatchSummary } from '@/store/matches/matchesSlice';
 import { useAppSelector } from '@/store/hooks';
 
+type LiveMatchesResponse = { data: MatchSummary[]; updatedAt?: string | null };
+
+async function fetchLiveMatches(forYou: boolean): Promise<{ matches: MatchSummary[]; updatedAt: string | null }> {
+  const url = forYou ? '/api/matches/feed/for-you' : '/api/matches/live';
+  const res = await api.get<LiveMatchesResponse>(url);
+  return { matches: res.data.data, updatedAt: res.data.updatedAt ?? null };
+}
+
 export default function MatchesPage() {
   const [forYou, setForYou] = useState(false);
   const accessToken = useAppSelector((s) => s.auth.accessToken);
+  const queryClient = useQueryClient();
+
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['matches', forYou ? 'for-you' : 'live'],
     enabled: !forYou || !!accessToken,
-    queryFn: async () => {
-      const url = forYou ? '/api/matches/feed/for-you' : '/api/matches/live';
-      const res = await api.get<{ data: MatchSummary[] }>(url);
-      return res.data.data;
+    queryFn: () => fetchLiveMatches(forYou),
+  });
+
+  const refreshMutation = useMutation({
+    mutationFn: async () => {
+      const res = await api.post<LiveMatchesResponse>('/api/matches/live/refresh');
+      return { matches: res.data.data, updatedAt: res.data.updatedAt ?? null };
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['matches'] });
     },
   });
 
@@ -31,6 +48,19 @@ export default function MatchesPage() {
         ? error.message
         : null;
 
+  const refreshErrorMessage =
+    isAxiosError(refreshMutation.error) &&
+    refreshMutation.error.response?.data &&
+    typeof refreshMutation.error.response.data === 'object' &&
+    'message' in refreshMutation.error.response.data
+      ? String((refreshMutation.error.response.data as { message?: string }).message)
+      : isAxiosError(refreshMutation.error)
+        ? refreshMutation.error.message
+        : null;
+
+  const matches = data?.matches ?? [];
+  const updatedAt = data?.updatedAt;
+
   return (
     <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
       <PageContainer>
@@ -39,11 +69,27 @@ export default function MatchesPage() {
             <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink-500 dark:text-ink-400">Live hub</p>
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Live matches</h1>
             <p className="mt-2 max-w-xl text-sm text-ink-600 dark:text-ink-400">
-              Every current match from CricAPI (set CRIC_API_KEY on the backend). “For you” only reorders the same list by
-              your favorite team from profile.
+              Matches are loaded from MongoDB. CricAPI runs only when you use Refresh (set CRIC_API_KEY on the backend).
+              “For you” reorders the same snapshot by your favorite team from profile.
             </p>
+            {updatedAt ? (
+              <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">Last snapshot: {new Date(updatedAt).toLocaleString()}</p>
+            ) : (
+              <p className="mt-2 text-xs text-ink-500 dark:text-ink-400">No snapshot yet — press Refresh to pull from CricAPI.</p>
+            )}
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="secondary"
+              disabled={refreshMutation.isPending}
+              className="gap-2"
+              onClick={() => refreshMutation.mutate()}
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refreshMutation.isPending ? 'animate-spin' : ''}`} />
+              Refresh from API
+            </Button>
             <Button type="button" size="sm" variant={forYou ? 'default' : 'outline'} onClick={() => setForYou(true)}>
               For you
             </Button>
@@ -57,9 +103,16 @@ export default function MatchesPage() {
             {loadErrorMessage}
           </div>
         ) : null}
+        {refreshMutation.isError && refreshErrorMessage ? (
+          <div className="mt-4 rounded-2xl border border-red-200 bg-red-50/90 p-4 text-sm text-red-900 dark:border-red-900/60 dark:bg-red-950/40 dark:text-red-100">
+            Refresh failed: {refreshErrorMessage}
+          </div>
+        ) : null}
 
-        {!isLoading && !isError && (data?.length ?? 0) === 0 ? (
-          <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">No current matches returned by CricAPI right now.</p>
+        {!isLoading && !isError && matches.length === 0 ? (
+          <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">
+            No matches in the database yet. Click “Refresh from API” to fetch the current list from CricAPI and store it.
+          </p>
         ) : null}
 
         <div className="mt-10 grid gap-4 md:grid-cols-2">
@@ -67,7 +120,7 @@ export default function MatchesPage() {
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-36 animate-pulse rounded-2xl border border-ink-200/60 bg-ink-100/80 dark:border-ink-800/60 dark:bg-ink-900/40" />
             ))}
-          {data?.map((m, idx) => (
+          {matches.map((m, idx) => (
             <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
               <Link
                 href={`/match/${m.id}`}
