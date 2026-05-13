@@ -7,6 +7,8 @@ import { useAppDispatch } from '@/store/hooks';
 import { setCredentials } from '@/store/auth/authSlice';
 import { loginRequest } from '@/services/authApi';
 import { Header } from '@/components/Header';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 export default function LoginPage() {
@@ -32,17 +34,17 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
       <Header />
-      <main className="mx-auto max-w-md px-4 py-16">
-        <div className="glass-panel p-8">
-          <h1 className="text-2xl font-semibold">Sign in</h1>
-          <p className="mt-2 text-sm text-slate-400">JWT access + refresh tokens issued on login.</p>
-          <form className="mt-8 space-y-4" onSubmit={onSubmit}>
+      <main className="mx-auto max-w-md px-4 pb-24 pt-28">
+        <Card className="border-ink-200/80 dark:border-ink-800/80">
+          <CardTitle>Sign in</CardTitle>
+          <CardDescription className="mt-2">Access token + refresh token issued on success.</CardDescription>
+          <form className="mt-8 space-y-5" onSubmit={onSubmit}>
             <div>
-              <label className="text-xs uppercase text-slate-400">Email</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Email</label>
               <input
-                className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none ring-flood-500 focus:ring-2"
+                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -50,29 +52,26 @@ export default function LoginPage() {
               />
             </div>
             <div>
-              <label className="text-xs uppercase text-slate-400">Password</label>
+              <label className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Password</label>
               <input
-                className="mt-1 w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm outline-none ring-flood-500 focus:ring-2"
+                className="mt-2 w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none ring-ink-900/10 transition focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
             </div>
-            <button
-              disabled={loading}
-              className="w-full rounded-full bg-flood-500 py-2 text-sm font-semibold text-pitch-950 disabled:opacity-50"
-            >
+            <Button type="submit" disabled={loading} className="w-full">
               {loading ? 'Signing in…' : 'Continue'}
-            </button>
+            </Button>
           </form>
-          <p className="mt-6 text-center text-sm text-slate-400">
+          <p className="mt-8 text-center text-sm text-ink-500 dark:text-ink-400">
             New here?{' '}
-            <Link href="/register" className="text-flood-400">
+            <Link href="/register" className="font-medium text-ink-900 underline-offset-4 hover:underline dark:text-ink-50">
               Create an account
             </Link>
           </p>
-        </div>
+        </Card>
       </main>
     </div>
   );

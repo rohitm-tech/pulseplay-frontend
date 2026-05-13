@@ -3,7 +3,7 @@
   "short_name": "PulsePlay",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#03140c",
-  "theme_color": "#03140c",
-  "description": "Real-time IPL second-screen experience"
+  "background_color": "#fafafa",
+  "theme_color": "#0a0a0a",
+  "description": "IPL second-screen — monochrome UI"
 }

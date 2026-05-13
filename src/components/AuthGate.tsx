@@ -18,8 +18,9 @@ export function AuthGate({ children }: { children: React.ReactNode }) {
 
   if (!rehydrated || !accessToken) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-sm text-slate-400">
-        Checking session…
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-3 px-4">
+        <div className="h-10 w-10 animate-spin rounded-full border-2 border-ink-200 border-t-ink-900 dark:border-ink-700 dark:border-t-ink-50" />
+        <p className="text-sm text-ink-500 dark:text-ink-400">Checking session…</p>
       </div>
     );
   }

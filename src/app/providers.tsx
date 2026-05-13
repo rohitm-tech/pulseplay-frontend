@@ -1,6 +1,7 @@
 'use client';
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from 'next-themes';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 import { useEffect, useState } from 'react';
@@ -25,10 +26,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
   return (
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
-        <QueryClientProvider client={queryClient}>
-          {children}
-          <Toaster richColors theme="dark" position="top-center" />
-        </QueryClientProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <QueryClientProvider client={queryClient}>
+            {children}
+            <Toaster richColors position="top-center" theme="system" />
+          </QueryClientProvider>
+        </ThemeProvider>
       </PersistGate>
     </Provider>
   );

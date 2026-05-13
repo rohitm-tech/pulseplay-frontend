@@ -23,7 +23,7 @@ export function usePulseSockets(matchId: string | undefined) {
   useEffect(() => {
     if (!matchId) return;
 
-    const opts = { auth: { token: accessToken }, transports: ['websocket', 'polling'] as const };
+    const opts = { auth: { token: accessToken }, transports: ['websocket', 'polling'] as ('websocket' | 'polling')[] };
     const base = config.wsUrl;
 
     const m = io(`${base}/matches`, opts);

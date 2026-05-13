@@ -1,19 +1,34 @@
 'use client';
 
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
+import { useTheme } from 'next-themes';
 
 export function WormChart({ points }: { points: { over: string; runs: number }[] }) {
+  const { resolvedTheme } = useTheme();
+  const isDark = resolvedTheme !== 'light';
+  const axis = isDark ? '#737373' : '#737373';
+  const line = isDark ? '#fafafa' : '#171717';
+  const grid = isDark ? '#262626' : '#e5e5e5';
+  const tipBg = isDark ? '#171717' : '#fafafa';
+  const tipFg = isDark ? '#fafafa' : '#171717';
+  const border = isDark ? '#404040' : '#e5e5e5';
+
   return (
     <div className="h-48 w-full">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={points}>
-          <XAxis dataKey="over" stroke="#94a3b8" fontSize={10} />
-          <YAxis stroke="#94a3b8" fontSize={10} />
+          <XAxis dataKey="over" stroke={axis} fontSize={10} tickLine={false} axisLine={{ stroke: grid }} />
+          <YAxis stroke={axis} fontSize={10} tickLine={false} axisLine={{ stroke: grid }} />
           <Tooltip
-            contentStyle={{ background: '#04140c', border: '1px solid rgba(255,255,255,0.1)' }}
-            labelStyle={{ color: '#e2e8f0' }}
+            contentStyle={{
+              background: tipBg,
+              border: `1px solid ${border}`,
+              borderRadius: '12px',
+              color: tipFg,
+            }}
+            labelStyle={{ color: tipFg, fontWeight: 600 }}
           />
-          <Line type="monotone" dataKey="runs" stroke="#2dd4bf" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="runs" stroke={line} strokeWidth={2} dot={false} activeDot={{ r: 4, fill: line }} />
         </LineChart>
       </ResponsiveContainer>
     </div>

@@ -3,22 +3,26 @@ import { Inter } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-geist' });
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
   title: 'PulsePlay — IPL second screen',
-  description: 'Real-time cricket engagement, polls, chat, and AI insights.',
+  description: 'Real-time cricket engagement. Monochrome, fast, interactive.',
   manifest: '/manifest.json',
 };
 
 export const viewport: Viewport = {
-  themeColor: '#03140c',
+  themeColor: '#0a0a0a',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className="dark">
-      <body className={`${inter.variable} font-sans`}>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} min-h-screen font-sans antialiased`}>
         <Providers>{children}</Providers>
       </body>
     </html>

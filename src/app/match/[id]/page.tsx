@@ -19,6 +19,8 @@ import { usePulseSockets } from '@/hooks/usePulseSockets';
 import api from '@/lib/api';
 import { WormChart } from '@/components/match/WormChart';
 import { toast } from 'sonner';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 
 const REACTIONS = ['🔥', '😱', '👏', '💔', '🐐'];
 
@@ -109,7 +111,14 @@ export default function MatchPage() {
     let acc = 0;
     return commentary.map((c, i) => {
       const ev = c.event as { runs?: number } | undefined;
-      acc += typeof ev?.runs === 'number' ? ev.runs : c.text.toLowerCase().includes('six') ? 6 : c.text.toLowerCase().includes('four') ? 4 : 1;
+      acc +=
+        typeof ev?.runs === 'number'
+          ? ev.runs
+          : c.text.toLowerCase().includes('six')
+            ? 6
+            : c.text.toLowerCase().includes('four')
+              ? 4
+              : 1;
       return { over: c.over || String(i), runs: acc };
     });
   }, [commentary]);
@@ -119,7 +128,7 @@ export default function MatchPage() {
   async function vote(pollId: string, option: string) {
     try {
       await api.post('/api/polls/vote', { pollId, option });
-      toast.success('Vote locked');
+      toast.success('Vote recorded');
     } catch {
       toast.error('Vote failed');
     }
@@ -127,145 +136,153 @@ export default function MatchPage() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
         <Header />
-        <main className="mx-auto max-w-6xl px-4 py-8">
+        <main className="mx-auto max-w-6xl px-4 pb-24 pt-28 sm:px-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs uppercase tracking-[0.3em] text-flood-400">Match center</p>
-              <h1 className="text-3xl font-semibold">{detail?.name ?? 'Loading…'}</h1>
-              <p className="text-sm text-slate-400">{detail?.venue}</p>
+              <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink-500 dark:text-ink-400">Match room</p>
+              <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">
+                {detail?.name ?? 'Loading…'}
+              </h1>
+              {detail?.venue && <p className="mt-1 text-sm text-ink-600 dark:text-ink-400">{detail.venue}</p>}
             </div>
-            <div className="rounded-full border border-white/10 px-4 py-2 text-xs text-slate-300">
-              Socket: {socketConnected ? <span className="text-flood-400">live</span> : <span className="text-amber-400">connecting</span>}
+            <div className="rounded-full border border-ink-200 bg-white/80 px-4 py-2 text-xs font-medium text-ink-600 shadow-soft dark:border-ink-800 dark:bg-ink-900/60 dark:text-ink-300">
+              Socket:{' '}
+              {socketConnected ? (
+                <span className="text-ink-900 dark:text-ink-50">live</span>
+              ) : (
+                <span className="text-ink-500">connecting</span>
+              )}
             </div>
           </div>
 
           <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            <div className="glass-panel p-5 lg:col-span-2">
-              <div className="flex items-center justify-between">
-                <h2 className="text-lg font-semibold">Live score</h2>
-                <span className="text-xs text-slate-400">Animated deltas via websocket</span>
-              </div>
+            <Card className="lg:col-span-2">
+              <CardTitle>Live score</CardTitle>
+              <CardDescription>Payloads from `live_score_update` — subtle motion on change.</CardDescription>
               <motion.pre
                 key={JSON.stringify(liveScore)}
-                initial={{ opacity: 0.4, scale: 0.99 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="mt-4 max-h-48 overflow-auto rounded-xl bg-black/40 p-4 text-xs text-flood-200 scrollbar-thin"
+                initial={{ opacity: 0.5 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 max-h-48 overflow-auto rounded-xl border border-ink-200 bg-ink-50 p-4 text-xs text-ink-800 scrollbar-thin dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200"
               >
                 {JSON.stringify(liveScore ?? detail?.score ?? {}, null, 2)}
               </motion.pre>
               <div className="mt-6">
-                <h3 className="text-sm font-semibold text-slate-200">Worm (cumulative narrative)</h3>
+                <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-200">Worm</h3>
                 <WormChart points={wormPoints.length ? wormPoints : [{ over: '0', runs: 0 }]} />
               </div>
-            </div>
+            </Card>
 
-            <div className="glass-panel p-5">
-              <h2 className="text-lg font-semibold">Fan reactions</h2>
-              <p className="text-xs text-slate-400">Bursts sync across the room.</p>
+            <Card>
+              <CardTitle>Reactions</CardTitle>
+              <CardDescription>Tap — bursts fan out in the overlay.</CardDescription>
               <div className="mt-4 flex flex-wrap gap-2">
                 {REACTIONS.map((r) => (
                   <button
                     key={r}
                     type="button"
                     onClick={() => sendReaction(r)}
-                    className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-2xl transition hover:-translate-y-0.5 hover:border-flood-500/50"
+                    className="rounded-2xl border border-ink-200 bg-white px-3 py-2 text-2xl transition hover:-translate-y-0.5 hover:border-ink-400 hover:shadow-soft active:scale-95 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500"
                   >
                     {r}
                   </button>
                 ))}
               </div>
-              <div className="relative mt-6 h-40 overflow-hidden rounded-xl border border-white/5 bg-gradient-to-b from-flood-500/10 to-transparent">
+              <div className="relative mt-6 h-40 overflow-hidden rounded-xl border border-ink-200 bg-gradient-to-b from-ink-100 to-transparent dark:border-ink-800 dark:from-ink-900 dark:to-transparent">
                 <AnimatePresence>
-                  {reactions.slice(0, 12).map((rx) => (
+                  {reactions.slice(0, 14).map((rx) => (
                     <motion.span
                       key={rx.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
+                      initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0 }}
                       className="absolute text-3xl"
-                      style={{ left: `${(rx.ts % 80) + 10}%`, top: `${(rx.id.length * 7) % 60}%` }}
+                      style={{ left: `${(rx.ts % 75) + 8}%`, top: `${(rx.id.length * 9) % 55}%` }}
                     >
                       {rx.emoji}
                     </motion.span>
                   ))}
                 </AnimatePresence>
               </div>
-            </div>
+            </Card>
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <div className="glass-panel p-5 lg:col-span-2">
-              <h2 className="text-lg font-semibold">Commentary timeline</h2>
+            <Card className="lg:col-span-2">
+              <CardTitle>Commentary</CardTitle>
+              <CardDescription>Structured events from the normalization engine.</CardDescription>
               <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
                 {commentary.map((c) => (
-                  <div key={c.id} className="rounded-xl border border-white/5 bg-black/30 p-3 text-sm">
-                    <div className="text-xs text-flood-400">Over {c.over}</div>
-                    <p className="text-slate-100">{c.text}</p>
-                    {c.event && (
-                      <p className="mt-1 text-xs text-slate-400">{JSON.stringify(c.event)}</p>
-                    )}
+                  <div
+                    key={c.id}
+                    className="rounded-xl border border-ink-200/80 bg-white/60 p-3 text-sm dark:border-ink-800/80 dark:bg-ink-900/40"
+                  >
+                    <div className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+                      Over {c.over}
+                    </div>
+                    <p className="mt-1 text-ink-900 dark:text-ink-100">{c.text}</p>
+                    {c.event != null ? (
+                      <p className="mt-2 font-mono text-xs text-ink-500 dark:text-ink-500">{JSON.stringify(c.event)}</p>
+                    ) : null}
                   </div>
                 ))}
               </div>
-            </div>
+            </Card>
 
             <div className="space-y-4">
-              <div className="glass-panel p-5">
-                <h2 className="text-lg font-semibold">Live polls</h2>
+              <Card>
+                <CardTitle>Polls</CardTitle>
+                <CardDescription>Timed questions — XP on close (admin).</CardDescription>
                 <div className="mt-4 space-y-3">
                   {polls.map((p) => (
-                    <div key={p._id} className="rounded-xl border border-white/10 bg-white/5 p-3">
-                      <p className="text-sm font-medium">{p.question}</p>
+                    <div key={p._id} className="rounded-xl border border-ink-200 bg-ink-50/80 p-3 dark:border-ink-800 dark:bg-ink-900/50">
+                      <p className="text-sm font-medium text-ink-900 dark:text-ink-50">{p.question}</p>
                       <div className="mt-2 flex flex-wrap gap-2">
                         {p.options.map((o) => (
-                          <button
-                            key={o}
-                            type="button"
-                            onClick={() => vote(p._id, o)}
-                            className="rounded-full border border-white/10 px-3 py-1 text-xs hover:border-flood-500/50"
-                          >
+                          <Button key={o} type="button" size="sm" variant="outline" onClick={() => vote(p._id, o)}>
                             {o}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
                   ))}
-                  {!polls.length && <p className="text-sm text-slate-500">No polls yet — admins can drop one in.</p>}
+                  {!polls.length && <p className="text-sm text-ink-500 dark:text-ink-400">No polls yet.</p>}
                 </div>
-              </div>
+              </Card>
 
-              <div className="glass-panel p-5">
-                <h2 className="text-lg font-semibold">AI insights</h2>
-                <div className="mt-3 space-y-3 text-sm text-slate-300">
+              <Card>
+                <CardTitle>AI insights</CardTitle>
+                <CardDescription>Mock service — wire your provider later.</CardDescription>
+                <div className="mt-3 space-y-3 text-sm">
                   {insights?.map((i) => (
-                    <div key={i.id} className="rounded-lg border border-white/5 bg-black/30 p-3">
-                      <p className="text-xs uppercase text-flood-400">{i.tone}</p>
-                      <p className="font-semibold text-white">{i.title}</p>
-                      <p className="text-slate-400">{i.body}</p>
+                    <div key={i.id} className="rounded-lg border border-ink-200 bg-white/70 p-3 dark:border-ink-800 dark:bg-ink-900/50">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-ink-500">{i.tone}</p>
+                      <p className="font-semibold text-ink-900 dark:text-ink-50">{i.title}</p>
+                      <p className="text-ink-600 dark:text-ink-400">{i.body}</p>
                     </div>
                   ))}
                 </div>
-              </div>
+              </Card>
             </div>
           </div>
 
-          <div className="mt-4 glass-panel p-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold">Fan chat</h2>
-              {typing.length > 0 && <span className="text-xs text-slate-400">{typing.join(', ')} typing…</span>}
+          <Card className="mt-4">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle>Fan chat</CardTitle>
+              {typing.length > 0 && <span className="text-xs text-ink-500 dark:text-ink-400">{typing.join(', ')} typing…</span>}
             </div>
             <div className="mt-4 max-h-64 space-y-2 overflow-y-auto scrollbar-thin">
               {chatMessages.map((m) => (
                 <div key={m.id} className="text-sm">
-                  <span className="font-semibold text-flood-300">{m.userName}</span>{' '}
-                  <span className="text-slate-200">{m.text}</span>
+                  <span className="font-semibold text-ink-900 dark:text-ink-100">{m.userName}</span>{' '}
+                  <span className="text-ink-700 dark:text-ink-300">{m.text}</span>
                 </div>
               ))}
             </div>
             <form
-              className="mt-4 flex gap-2"
+              className="mt-4 flex flex-col gap-2 sm:flex-row"
               onSubmit={(e) => {
                 e.preventDefault();
                 if (!chatInput.trim()) return;
@@ -279,12 +296,12 @@ export default function MatchPage() {
                   setChatInput(e.target.value);
                   sendTyping();
                 }}
-                className="flex-1 rounded-xl border border-white/10 bg-black/40 px-3 py-2 text-sm outline-none ring-flood-500 focus:ring-2"
-                placeholder={`Shout as ${user?.name ?? 'fan'}`}
+                className="flex-1 rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm outline-none ring-ink-900/10 focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                placeholder={`Message as ${user?.name ?? 'fan'}`}
               />
-              <button className="rounded-full bg-flood-500 px-4 text-sm font-semibold text-pitch-950">Send</button>
+              <Button type="submit">Send</Button>
             </form>
-          </div>
+          </Card>
         </main>
       </div>
     </AuthGate>

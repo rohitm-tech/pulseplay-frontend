@@ -1,46 +1,50 @@
 import type { Config } from 'tailwindcss';
+import tailwindcssAnimate from 'tailwindcss-animate';
 
 const config: Config = {
   darkMode: 'class',
   content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
   theme: {
     extend: {
-      colors: {
-        pitch: {
-          950: '#03140c',
-          900: '#052a18',
-          800: '#0a3d24',
-          700: '#0f5132',
-        },
-        flood: {
-          400: '#5eead4',
-          500: '#2dd4bf',
-          600: '#14b8a6',
-        },
-        strobe: {
-          400: '#fbbf24',
-          500: '#f59e0b',
-        },
-      },
       fontFamily: {
-        sans: ['var(--font-geist)', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-inter)', 'system-ui', 'sans-serif'],
+      },
+      colors: {
+        ink: {
+          '50': '#fafafa',
+          '100': '#f5f5f5',
+          '200': '#e5e5e5',
+          '300': '#d4d4d4',
+          '400': '#a3a3a3',
+          '500': '#737373',
+          '600': '#525252',
+          '700': '#404040',
+          '800': '#262626',
+          '900': '#171717',
+          '950': '#0a0a0a',
+        },
       },
       boxShadow: {
-        glow: '0 0 40px rgba(45, 212, 191, 0.25)',
-        card: '0 8px 32px rgba(0, 0, 0, 0.35)',
+        soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
+        'soft-lg': '0 10px 40px -10px rgba(0, 0, 0, 0.12), 0 20px 25px -5px rgba(0, 0, 0, 0.06)',
       },
       keyframes: {
-        pulseLive: {
-          '0%, 100%': { opacity: '1', transform: 'scale(1)' },
-          '50%': { opacity: '0.85', transform: 'scale(1.02)' },
+        'fade-in-up': {
+          from: { opacity: '0', transform: 'translateY(16px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'pulse-ring': {
+          '0%, 100%': { opacity: '1', boxShadow: '0 0 0 0 rgba(23, 23, 23, 0.35)' },
+          '50%': { opacity: '0.9', boxShadow: '0 0 0 10px rgba(23, 23, 23, 0)' },
         },
       },
       animation: {
-        'pulse-live': 'pulseLive 2s ease-in-out infinite',
+        'fade-in-up': 'fade-in-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+        'pulse-ring': 'pulse-ring 2.2s ease-out infinite',
       },
     },
   },
-  plugins: [],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;

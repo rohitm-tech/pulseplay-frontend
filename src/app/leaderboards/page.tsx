@@ -22,14 +22,14 @@ export default function LeaderboardsPage() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
         <Header />
-        <main className="mx-auto max-w-4xl px-4 py-10">
-          <h1 className="text-3xl font-semibold">Leaderboards</h1>
-          <p className="text-sm text-slate-400">XP, streaks, and prediction hits.</p>
-          <div className="mt-8 overflow-hidden rounded-2xl border border-white/10">
+        <main className="mx-auto max-w-4xl px-4 pb-24 pt-28 sm:px-6">
+          <h1 className="text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Leaderboards</h1>
+          <p className="mt-2 text-sm text-ink-600 dark:text-ink-400">XP, correct calls, and streaks — high contrast table.</p>
+          <div className="mt-8 overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900/40">
             <table className="w-full text-left text-sm">
-              <thead className="bg-white/5 text-xs uppercase text-slate-400">
+              <thead className="border-b border-ink-200 bg-ink-50 text-xs font-semibold uppercase tracking-wide text-ink-500 dark:border-ink-800 dark:bg-ink-950/80 dark:text-ink-400">
                 <tr>
                   <th className="px-4 py-3">#</th>
                   <th className="px-4 py-3">Fan</th>
@@ -38,14 +38,14 @@ export default function LeaderboardsPage() {
                   <th className="px-4 py-3">Streak</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="text-ink-800 dark:text-ink-200">
                 {rows.map((r, idx) => (
-                  <tr key={r._id} className="border-t border-white/5">
-                    <td className="px-4 py-3 text-slate-400">{idx + 1}</td>
-                    <td className="px-4 py-3 font-medium text-white">
+                  <tr key={r._id} className="border-t border-ink-100 transition hover:bg-ink-50 dark:border-ink-800/80 dark:hover:bg-ink-900/60">
+                    <td className="px-4 py-3 text-ink-500 dark:text-ink-500">{idx + 1}</td>
+                    <td className="px-4 py-3 font-medium text-ink-900 dark:text-ink-50">
                       {(r.userId as { name?: string })?.name ?? 'Player'}
                     </td>
-                    <td className="px-4 py-3 text-flood-300">{r.xp}</td>
+                    <td className="px-4 py-3">{r.xp}</td>
                     <td className="px-4 py-3">{r.correctPredictions}</td>
                     <td className="px-4 py-3">{r.streak}</td>
                   </tr>

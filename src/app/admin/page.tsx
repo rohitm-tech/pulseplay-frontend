@@ -7,6 +7,8 @@ import { useAppSelector } from '@/store/hooks';
 import api from '@/lib/api';
 import { toast } from 'sonner';
 import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardDescription, CardTitle } from '@/components/ui/card';
 
 export default function AdminPage() {
   const role = useAppSelector((s) => s.auth.user?.role);
@@ -19,9 +21,9 @@ export default function AdminPage() {
   if (role !== 'admin') {
     return (
       <AuthGate>
-        <div className="min-h-screen">
+        <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
           <Header />
-          <main className="px-4 py-16 text-center text-slate-400">Admin only.</main>
+          <main className="px-4 pb-24 pt-28 text-center text-ink-600 dark:text-ink-400">Admin only.</main>
         </div>
       </AuthGate>
     );
@@ -50,52 +52,52 @@ export default function AdminPage() {
 
   return (
     <AuthGate>
-      <div className="min-h-screen">
+      <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
         <Header />
-        <main className="mx-auto max-w-4xl space-y-6 px-4 py-10">
-          <div className="flex items-center justify-between">
-            <h1 className="text-3xl font-semibold">Admin</h1>
-            <button className="text-sm text-flood-400" type="button" onClick={() => router.push('/matches')}>
+        <main className="mx-auto max-w-4xl space-y-6 px-4 pb-24 pt-28 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Admin</h1>
+            <Button type="button" variant="ghost" onClick={() => router.push('/matches')}>
               Back to matches
-            </button>
+            </Button>
           </div>
-          <div className="glass-panel p-6">
-            <h2 className="text-lg font-semibold">Analytics</h2>
-            <button
-              type="button"
-              className="mt-4 rounded-full bg-white/10 px-4 py-2 text-sm"
-              onClick={() => void loadAnalytics()}
-            >
+          <Card>
+            <CardTitle>Analytics</CardTitle>
+            <CardDescription>Lightweight counters from the API.</CardDescription>
+            <Button type="button" variant="secondary" className="mt-4" onClick={() => void loadAnalytics()}>
               Refresh
-            </button>
+            </Button>
             {analytics && (
-              <pre className="mt-4 max-h-48 overflow-auto rounded-xl bg-black/40 p-4 text-xs text-flood-200">
+              <pre className="mt-4 max-h-48 overflow-auto rounded-xl border border-ink-200 bg-ink-50 p-4 text-xs text-ink-800 dark:border-ink-800 dark:bg-ink-950 dark:text-ink-200">
                 {JSON.stringify(analytics, null, 2)}
               </pre>
             )}
-          </div>
-          <div className="glass-panel space-y-4 p-6">
-            <h2 className="text-lg font-semibold">Manual poll</h2>
-            <input
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-            />
-            <input
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
-              value={matchId}
-              onChange={(e) => setMatchId(e.target.value)}
-            />
-            <input
-              type="datetime-local"
-              className="w-full rounded-xl border border-white/10 bg-black/30 px-3 py-2 text-sm"
-              value={expires}
-              onChange={(e) => setExpires(e.target.value)}
-            />
-            <button type="button" className="rounded-full bg-flood-500 px-6 py-2 text-sm font-semibold text-pitch-950" onClick={() => void createPoll()}>
-              Publish poll
-            </button>
-          </div>
+          </Card>
+          <Card>
+            <CardTitle>Manual poll</CardTitle>
+            <CardDescription>Publishes over Socket.IO to match rooms.</CardDescription>
+            <div className="mt-6 space-y-4">
+              <input
+                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+              />
+              <input
+                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                value={matchId}
+                onChange={(e) => setMatchId(e.target.value)}
+              />
+              <input
+                type="datetime-local"
+                className="w-full rounded-xl border border-ink-200 bg-white px-3 py-2.5 text-sm dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                value={expires}
+                onChange={(e) => setExpires(e.target.value)}
+              />
+              <Button type="button" onClick={() => void createPoll()}>
+                Publish poll
+              </Button>
+            </div>
+          </Card>
         </main>
       </div>
     </AuthGate>
