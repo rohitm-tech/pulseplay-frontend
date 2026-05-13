@@ -37,9 +37,10 @@ export default function MatchesPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink-500 dark:text-ink-400">Live hub</p>
-            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">IPL matches</h1>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Live matches</h1>
             <p className="mt-2 max-w-xl text-sm text-ink-600 dark:text-ink-400">
-              Live list from CricAPI (set CRIC_API_KEY on the backend). “For you” reorders by your favorite team from profile.
+              Every current match from CricAPI (set CRIC_API_KEY on the backend). “For you” only reorders the same list by
+              your favorite team from profile.
             </p>
           </div>
           <div className="flex gap-2">
