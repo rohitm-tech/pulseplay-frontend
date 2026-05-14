@@ -2,6 +2,40 @@ import type { MatchSummary } from '@/store/matches/matchesSlice';
 
 export type LiveMatchesGroupMode = 'none' | 'date' | 'series' | 'gender' | 'venueRegion' | 'india';
 
+/** Rough bucket for hub toggles — driven by CricAPI-style status strings (and scorecard-shaped statuses). */
+export type MatchTimeBucket = 'past' | 'current' | 'upcoming';
+
+export function matchTimeBucket(m: MatchSummary): MatchTimeBucket {
+  const raw = (m.status ?? '').trim();
+  const s = raw.toLowerCase();
+
+  if (
+    /\b(won|win by|won the|tied\b|tie\b|abandon|no result|\bn\/r\b|match drawn|victory|match over)\b/i.test(s) ||
+    /\bbeat\s+[a-z]/i.test(s)
+  ) {
+    return 'past';
+  }
+
+  if (/\d+\s*\/\s*\d+/.test(raw)) {
+    return 'current';
+  }
+
+  if (
+    /\b(live|in progress|drinks|lunch|tea|stumps|innings break|rain|delay|requires|need\s+\d+|trail|follow on|lead by)\b/i.test(s)
+  ) {
+    return 'current';
+  }
+
+  if (
+    s === 'scheduled' ||
+    /\b(scheduled|not started|yet to begin|toss|opt(s|ted)? to|elected to|starts at|will start|pre[- ]match)\b/i.test(s)
+  ) {
+    return 'upcoming';
+  }
+
+  return 'current';
+}
+
 export function matchSearchBlob(m: MatchSummary): string {
   const teamBits = (m.teams ?? []).join(' ');
   const infoBits = m.teamInfo

@@ -2,8 +2,15 @@
 
 import { Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useTheme } from 'next-themes';
+import { cn } from '@/lib/utils';
 
-export function WormChart({ points }: { points: { over: string; runs: number }[] }) {
+export function WormChart({
+  points,
+  className,
+}: {
+  points: { over: string; runs: number }[];
+  className?: string;
+}) {
   const { resolvedTheme } = useTheme();
   const isDark = resolvedTheme !== 'light';
   const axis = isDark ? '#737373' : '#737373';
@@ -14,7 +21,7 @@ export function WormChart({ points }: { points: { over: string; runs: number }[]
   const border = isDark ? '#404040' : '#e5e5e5';
 
   return (
-    <div className="h-48 w-full">
+    <div className={cn('h-44 w-full sm:h-48', className)}>
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={points}>
           <XAxis dataKey="over" stroke={axis} fontSize={10} tickLine={false} axisLine={{ stroke: grid }} />

@@ -99,6 +99,19 @@ export function usePulseSockets(matchId: string | undefined, favoriteTeam?: stri
         /* ignore */
       }
     });
+    m.on('poll_created', (poll: { pollId: string; question: string; options: string[]; matchId: string; expiresAt: string }) => {
+      if (poll.matchId !== matchId) return;
+      dispatch(
+        upsertPoll({
+          _id: poll.pollId,
+          question: poll.question,
+          options: poll.options,
+          matchId: poll.matchId,
+          expiresAt: typeof poll.expiresAt === 'string' ? poll.expiresAt : String(poll.expiresAt),
+          status: 'open',
+        })
+      );
+    });
 
     const c = io(`${base}/chat`, opts);
     chatRef.current = c;

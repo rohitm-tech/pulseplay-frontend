@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { isAxiosError } from 'axios';
 import { RefreshCw, Search } from 'lucide-react';
@@ -13,8 +13,10 @@ import { LiveMatchCard } from '@/components/match/LiveMatchCard';
 import {
   filterMatchesByQuery,
   groupMatches,
+  matchTimeBucket,
   sortMatchesLatestFirst,
   type LiveMatchesGroupMode,
+  type MatchTimeBucket,
 } from '@/lib/liveMatchesUi';
 
 type LiveMatchesResponse = { data: MatchSummary[]; updatedAt?: string | null };
@@ -34,9 +36,16 @@ const GROUP_OPTIONS: { value: LiveMatchesGroupMode; label: string; hint: string 
   { value: 'india', label: 'India', hint: 'India vs international — default view' },
 ];
 
+const TIME_FILTER_OPTIONS: { value: MatchTimeBucket; label: string }[] = [
+  { value: 'past', label: 'Past' },
+  { value: 'current', label: 'Current' },
+  { value: 'upcoming', label: 'Upcoming' },
+];
+
 export default function MatchesPage() {
   const [forYou, setForYou] = useState(false);
   const [search, setSearch] = useState('');
+  const [timeFilter, setTimeFilter] = useState<MatchTimeBucket>('current');
   const [groupMode, setGroupMode] = useState<LiveMatchesGroupMode>('india');
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const queryClient = useQueryClient();
@@ -79,7 +88,16 @@ export default function MatchesPage() {
 
   const filtered = useMemo(() => filterMatchesByQuery(rawMatches ?? [], search), [rawMatches, search]);
   const ordered = useMemo(() => sortMatchesLatestFirst(filtered), [filtered]);
-  const sections = useMemo(() => groupMatches(ordered, groupMode), [ordered, groupMode]);
+  const hasUpcoming = useMemo(() => ordered.some((m) => matchTimeBucket(m) === 'upcoming'), [ordered]);
+  const timeScoped = useMemo(
+    () => ordered.filter((m) => matchTimeBucket(m) === timeFilter),
+    [ordered, timeFilter]
+  );
+  const sections = useMemo(() => groupMatches(timeScoped, groupMode), [timeScoped, groupMode]);
+
+  useEffect(() => {
+    if (!hasUpcoming && timeFilter === 'upcoming') setTimeFilter('current');
+  }, [hasUpcoming, timeFilter]);
 
   const totalCount = rawMatches?.length ?? 0;
 
@@ -148,6 +166,23 @@ export default function MatchesPage() {
             />
           </div>
           <div className="flex min-w-0 flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Show</span>
+            <div className="flex flex-wrap gap-1.5">
+              {TIME_FILTER_OPTIONS.filter((opt) => opt.value !== 'upcoming' || hasUpcoming).map((opt) => (
+                <Button
+                  key={opt.value}
+                  type="button"
+                  size="sm"
+                  variant={timeFilter === opt.value ? 'default' : 'outline'}
+                  className="shrink-0"
+                  onClick={() => setTimeFilter(opt.value)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          <div className="flex min-w-0 flex-col gap-2">
             <span className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Group by</span>
             <div className="flex flex-wrap gap-1.5">
               {GROUP_OPTIONS.map((opt) => (
@@ -175,6 +210,13 @@ export default function MatchesPage() {
 
         {!isLoading && !isError && totalCount > 0 && filtered.length === 0 ? (
           <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">No matches match your search. Try another team or keyword.</p>
+        ) : null}
+
+        {!isLoading && !isError && filtered.length > 0 && timeScoped.length === 0 ? (
+          <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">
+            No matches in this view — try Past, Current
+            {hasUpcoming ? ', or Upcoming' : ''}.
+          </p>
         ) : null}
 
         <div className="mt-10 space-y-12">

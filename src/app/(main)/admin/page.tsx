@@ -17,6 +17,8 @@ export default function AdminPage() {
   const [question, setQuestion] = useState('Will this over go above 15 runs?');
   const [matchId, setMatchId] = useState('mock-ipl-1');
   const [expires, setExpires] = useState(() => new Date(Date.now() + 3600000).toISOString().slice(0, 16));
+  const [hydrateCommentary, setHydrateCommentary] = useState(false);
+  const [genLoading, setGenLoading] = useState(false);
 
   if (role !== 'admin') {
     return (
@@ -32,6 +34,29 @@ export default function AdminPage() {
     const res = await api.get('/api/admin/analytics');
     setAnalytics(res.data.data);
     toast.success('Analytics loaded');
+  }
+
+  async function generateFromCommentary() {
+    setGenLoading(true);
+    try {
+      await api.post('/api/polls/generate-from-commentary', {
+        matchId: matchId.trim(),
+        hoursValid: 6,
+        hydrateIfEmpty: hydrateCommentary,
+      });
+      toast.success('Gemini poll created from commentary');
+    } catch (e) {
+      const msg =
+        typeof e === 'object' &&
+        e !== null &&
+        'response' in e &&
+        typeof (e as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? String((e as { response: { data: { message: string } } }).response.data.message)
+          : 'Failed to generate poll';
+      toast.error(msg);
+    } finally {
+      setGenLoading(false);
+    }
   }
 
   async function createPoll() {
@@ -93,6 +118,27 @@ export default function AdminPage() {
               />
               <Button type="button" onClick={() => void createPoll()}>
                 Publish poll
+              </Button>
+            </div>
+          </Card>
+          <Card>
+            <CardTitle>Gemini poll from commentary</CardTitle>
+            <CardDescription>
+              Reads cached ball-by-ball lines in Mongo for this match ID, then asks Gemini for a question + options + correct
+              answer. Requires GEMINI_API_KEY; optional one-shot CricAPI fetch if the cache is empty.
+            </CardDescription>
+            <div className="mt-6 space-y-4">
+              <label className="flex cursor-pointer items-center gap-2 text-sm text-ink-700 dark:text-ink-300">
+                <input
+                  type="checkbox"
+                  checked={hydrateCommentary}
+                  onChange={(e) => setHydrateCommentary(e.target.checked)}
+                  className="rounded border-ink-300"
+                />
+                If DB has no commentary, fetch once (needs CRIC_API_KEY)
+              </label>
+              <Button type="button" variant="secondary" disabled={genLoading} onClick={() => void generateFromCommentary()}>
+                {genLoading ? 'Generating…' : 'Generate & publish'}
               </Button>
             </div>
           </Card>
