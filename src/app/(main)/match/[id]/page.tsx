@@ -312,7 +312,7 @@ export default function MatchPage() {
               {detail?.venue && <p className="mt-1 text-sm text-ink-600 dark:text-ink-400">{detail.venue}</p>}
             </div>
             <div className="flex flex-wrap items-center gap-2">
-              <div className="rounded-full border border-ink-200 bg-white/80 px-4 py-2 text-xs font-medium text-ink-600 shadow-soft dark:border-ink-800 dark:bg-ink-900/60 dark:text-ink-300">
+              <div className="rounded-full border border-ink-200/90 bg-white/80 px-4 py-2 text-xs font-medium text-ink-600 dark:border-ink-700 dark:bg-ink-900/60 dark:text-ink-300">
                 Socket:{' '}
                 {socketConnected ? (
                   <span className="text-ink-900 dark:text-ink-50">live</span>
@@ -449,7 +449,7 @@ export default function MatchPage() {
                       key={r}
                       type="button"
                       onClick={() => sendReaction(r)}
-                      className="rounded-2xl border border-ink-200 bg-white px-3 py-1.5 text-xl transition hover:-translate-y-0.5 hover:border-ink-400 hover:shadow-soft active:scale-95 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500"
+                      className="rounded-2xl border border-ink-200 bg-white px-3 py-1.5 text-xl transition hover:-translate-y-0.5 hover:border-ink-400 active:scale-95 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500"
                     >
                       {r}
                     </button>
@@ -620,7 +620,7 @@ export default function MatchPage() {
                   setChatInput(e.target.value);
                   sendTyping();
                 }}
-                className="flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm outline-none ring-ink-900/10 focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50"
+                className="flex-1 rounded-xl border border-ink-200 bg-white px-4 py-2.5 text-sm outline-none transition focus-visible:border-ink-900 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:focus-visible:border-ink-300"
                 placeholder={`Message as ${user?.name ?? 'fan'}`}
               />
               <Button type="submit">Send</Button>
