@@ -19,6 +19,7 @@ import { setLeaderboard } from '@/store/leaderboard/leaderboardSlice';
 import { usePulseSockets } from '@/hooks/usePulseSockets';
 import api from '@/lib/api';
 import {
+  formatCommentaryEventLabel,
   localMomentumFromFeed,
   localTimelineFromFeed,
   rowsFromLiveScoreSocket,
@@ -28,6 +29,7 @@ import {
 } from '@/lib/matchFeed';
 import { isAxiosError } from 'axios';
 import { MatchTimeline } from '@/components/match/MatchTimeline';
+import { LiveScoreBoard } from '@/components/match/LiveScoreBoard';
 
 /** Recharts pulls browser-only deps; load client-only to avoid App Router / webpack `__webpack_modules__[moduleId] is not a function` during prerender. */
 const WormChart = dynamic(
@@ -89,6 +91,8 @@ export default function MatchPage() {
   useQuery({
     queryKey: ['match', matchId],
     enabled: !!matchId,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await api.get<{ data: MatchSummary }>(`/api/matches/${matchId}`);
       dispatch(setMatchDetail(res.data.data));
@@ -99,7 +103,8 @@ export default function MatchPage() {
   useQuery({
     queryKey: ['commentary', matchId],
     enabled: !!matchId,
-    refetchInterval: (q) => (Array.isArray(q.state.data) && q.state.data.length === 0 ? 25_000 : false),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await api.get<{ data: typeof commentary }>(`/api/matches/${matchId}/commentary`);
       dispatch(setCommentary(res.data.data));
@@ -166,11 +171,8 @@ export default function MatchPage() {
   const { data: analytics } = useQuery({
     queryKey: ['analytics', matchId],
     enabled: !!matchId,
-    refetchInterval: (q) => {
-      const d = q.state.data as { momentum?: unknown[] } | undefined;
-      if (!d || !Array.isArray(d.momentum) || d.momentum.length === 0) return 30_000;
-      return 60_000;
-    },
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const res = await api.get<{
         data: {
@@ -202,7 +204,7 @@ export default function MatchPage() {
       teamB: b,
       pTeamA: 0.5,
       pTeamB: 0.5,
-      note: 'Heuristic idle — ball probabilities need CricAPI commentary; scorecard rows are shown below.',
+      note: 'Heuristic idle — win lean refines when more ball-by-ball lines are available.',
     };
   }, [analytics?.winProbability, detail, liveScore, feedCommentary.length]);
 
@@ -330,143 +332,151 @@ export default function MatchPage() {
             </div>
           </div>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
-              <CardTitle>Live score</CardTitle>
-              <CardDescription>Payloads from `live_score_update` — subtle motion on change.</CardDescription>
-              <motion.pre
-                key={JSON.stringify(liveScore)}
-                initial={{ opacity: 0.5 }}
+          <Card className="mt-6 p-5 sm:p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <CardTitle>Scorecard</CardTitle>
+                <CardDescription>
+                  Innings and status from the live feed when connected; loaded once from the server — no score polling.
+                </CardDescription>
+              </div>
+            </div>
+            <div className="mt-5">
+              <LiveScoreBoard live={liveScore} detail={detail} />
+            </div>
+            <div className="mt-6 border-t border-ink-200/60 pt-5 dark:border-ink-800/60">
+              <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-200">Run worm</h3>
+              <motion.div
+                key={wormPoints.map((p) => `${p.over}:${p.runs}`).join('|')}
+                initial={{ opacity: 0.88 }}
                 animate={{ opacity: 1 }}
-                className="mt-4 max-h-48 overflow-auto rounded-xl border border-ink-200 bg-ink-50 p-4 text-xs text-ink-800 scrollbar-thin dark:border-ink-800 dark:bg-ink-900 dark:text-ink-200"
+                transition={{ duration: 0.35 }}
+                className="mt-3"
               >
-                {JSON.stringify(liveScore ?? detail?.score ?? {}, null, 2)}
-              </motion.pre>
-              <div className="mt-6">
-                <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-200">Run worm</h3>
-                <motion.div
-                  key={JSON.stringify(wormPoints)}
-                  initial={{ opacity: 0.88 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: 0.35 }}
-                >
-                  <WormChart points={wormPoints.length ? wormPoints : [{ over: '0', runs: 0 }]} />
-                </motion.div>
-              </div>
-            </Card>
+                <WormChart points={wormPoints.length ? wormPoints : [{ over: '0', runs: 0 }]} />
+              </motion.div>
+            </div>
+          </Card>
 
-            <Card>
-              <CardTitle>Live analytics</CardTitle>
-              <CardDescription>Heuristic momentum, key-event timeline, and rough win lean from recent balls.</CardDescription>
-              <div className="mt-4 space-y-4">
-                {displayWinProb ? (
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Win lean</p>
-                    <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800">
-                      <div
-                        className="bg-ink-900 dark:bg-ink-100"
-                        style={{ width: `${Math.round(displayWinProb.pTeamA * 100)}%` }}
-                      />
-                    </div>
-                    <p className="mt-2 text-xs text-ink-600 dark:text-ink-400">
-                      {displayWinProb.teamA}: {(displayWinProb.pTeamA * 100).toFixed(0)}% · {displayWinProb.teamB}:{' '}
-                      {(displayWinProb.pTeamB * 100).toFixed(0)}%
-                    </p>
-                    <p className="mt-1 text-xs text-ink-500 dark:text-ink-500">{displayWinProb.note}</p>
-                  </div>
-                ) : null}
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Momentum</p>
-                  <MomentumChart
-                    points={
-                      analytics?.momentum?.length
-                        ? analytics.momentum
-                        : clientMomentum.length
-                          ? clientMomentum
-                          : [{ over: '0', score: 0 }]
-                    }
-                  />
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Key moments</p>
-                  <div className="mt-2 max-h-48 overflow-y-auto pr-1">
-                    <MatchTimeline items={analytics?.timeline?.length ? analytics.timeline : clientTimeline} />
-                  </div>
-                </div>
-              </div>
-            </Card>
-
-            <Card>
-              <CardTitle>Reactions</CardTitle>
-              <CardDescription>Tap — bursts fan out in the overlay.</CardDescription>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {REACTIONS.map((r) => (
-                  <button
-                    key={r}
-                    type="button"
-                    onClick={() => sendReaction(r)}
-                    className="rounded-2xl border border-ink-200 bg-white px-4 py-2 text-2xl transition hover:-translate-y-0.5 hover:border-ink-400 hover:shadow-soft active:scale-95 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500"
-                  >
-                    {r}
-                  </button>
-                ))}
-              </div>
-              <div className="relative mt-6 h-40 overflow-hidden rounded-xl border border-ink-200 bg-gradient-to-b from-ink-100 to-transparent dark:border-ink-800 dark:from-ink-900 dark:to-transparent">
-                <AnimatePresence>
-                  {reactions.slice(0, 14).map((rx) => (
-                    <motion.span
-                      key={rx.id}
-                      initial={{ opacity: 0, y: 12, scale: 0.9 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="absolute text-3xl"
-                      style={{ left: `${(rx.ts % 75) + 8}%`, top: `${(rx.id.length * 9) % 55}%` }}
-                    >
-                      {rx.emoji}
-                    </motion.span>
-                  ))}
-                </AnimatePresence>
-              </div>
-            </Card>
-          </div>
-
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <Card className="lg:col-span-2">
+          <div className="mt-4 grid gap-4 lg:grid-cols-12">
+            <Card className="p-5 lg:col-span-8 sm:p-6">
               <CardTitle>Commentary</CardTitle>
-              <CardDescription>Structured events from the normalization engine.</CardDescription>
-              <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
+              <CardDescription>Ball-by-ball feed with quick explainers.</CardDescription>
+              <div className="mt-4 max-h-[min(52vh,520px)] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
                 {feedCommentary.length === 0 ? (
-                  <p className="text-sm text-ink-500 dark:text-ink-400">No ball-by-ball lines yet for this match (or CricAPI has no feed).</p>
+                  <p className="text-sm text-ink-500 dark:text-ink-400">No ball-by-ball lines yet for this match.</p>
                 ) : null}
                 {commentary.length === 0 && feedCommentary.length > 0 ? (
                   <p className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-                    Showing lines derived from the live score socket until REST commentary fills in.
+                    Showing lines derived from the live score feed until full commentary is available.
                   </p>
                 ) : null}
-                {feedCommentary.map((c) => (
-                  <div
-                    key={c.id}
-                    className="rounded-xl border border-ink-200/80 bg-white/60 p-3 text-sm dark:border-ink-800/80 dark:bg-ink-900/40"
-                  >
-                    <div className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
-                      Over {c.over}
+                {feedCommentary.map((c) => {
+                  const eventLine = formatCommentaryEventLabel(c.event);
+                  return (
+                    <div
+                      key={c.id}
+                      className="rounded-xl border border-ink-200/80 bg-white/60 p-3 text-sm dark:border-ink-800/80 dark:bg-ink-900/40"
+                    >
+                      <div className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">
+                        Over {c.over}
+                      </div>
+                      <p className="mt-1 text-ink-900 dark:text-ink-100">{c.text}</p>
+                      {eventLine ? (
+                        <p className="mt-2 inline-flex max-w-full rounded-lg bg-ink-100/90 px-2.5 py-1 text-xs text-ink-700 dark:bg-ink-800/80 dark:text-ink-200">
+                          {eventLine}
+                        </p>
+                      ) : null}
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={() => void explainBall(c.text)}>
+                          What happened?
+                        </Button>
+                      </div>
                     </div>
-                    <p className="mt-1 text-ink-900 dark:text-ink-100">{c.text}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      <Button type="button" size="sm" variant="outline" onClick={() => void explainBall(c.text)}>
-                        What happened?
-                      </Button>
-                    </div>
-                    {c.event != null ? (
-                      <p className="mt-2 font-mono text-xs text-ink-500 dark:text-ink-500">{JSON.stringify(c.event)}</p>
-                    ) : null}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </Card>
 
-            <div className="space-y-4">
-              <Card>
+            <div className="flex flex-col gap-4 lg:col-span-4">
+              <Card className="p-5 sm:p-6">
+                <CardTitle>Live analytics</CardTitle>
+                <CardDescription>Momentum, key moments, and win lean from recent feed data.</CardDescription>
+                <div className="mt-4 space-y-4">
+                  {displayWinProb ? (
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Win lean</p>
+                      <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800">
+                        <div
+                          className="bg-ink-900 dark:bg-ink-100"
+                          style={{ width: `${Math.round(displayWinProb.pTeamA * 100)}%` }}
+                        />
+                      </div>
+                      <p className="mt-2 text-xs text-ink-600 dark:text-ink-400">
+                        {displayWinProb.teamA}: {(displayWinProb.pTeamA * 100).toFixed(0)}% · {displayWinProb.teamB}:{' '}
+                        {(displayWinProb.pTeamB * 100).toFixed(0)}%
+                      </p>
+                      <p className="mt-1 text-xs text-ink-500 dark:text-ink-500">{displayWinProb.note}</p>
+                    </div>
+                  ) : null}
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Momentum</p>
+                    <MomentumChart
+                      points={
+                        analytics?.momentum?.length
+                          ? analytics.momentum
+                          : clientMomentum.length
+                            ? clientMomentum
+                            : [{ over: '0', score: 0 }]
+                      }
+                    />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Key moments</p>
+                    <div className="mt-2 max-h-40 overflow-y-auto pr-1">
+                      <MatchTimeline items={analytics?.timeline?.length ? analytics.timeline : clientTimeline} />
+                    </div>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-5 sm:p-6">
+                <CardTitle>Reactions</CardTitle>
+                <CardDescription>Tap to fan out on the overlay.</CardDescription>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {REACTIONS.map((r) => (
+                    <button
+                      key={r}
+                      type="button"
+                      onClick={() => sendReaction(r)}
+                      className="rounded-2xl border border-ink-200 bg-white px-3 py-1.5 text-xl transition hover:-translate-y-0.5 hover:border-ink-400 hover:shadow-soft active:scale-95 dark:border-ink-700 dark:bg-ink-900 dark:hover:border-ink-500"
+                    >
+                      {r}
+                    </button>
+                  ))}
+                </div>
+                <div className="relative mt-4 h-28 overflow-hidden rounded-xl border border-ink-200 bg-gradient-to-b from-ink-100 to-transparent dark:border-ink-800 dark:from-ink-900 dark:to-transparent">
+                  <AnimatePresence>
+                    {reactions.slice(0, 14).map((rx) => (
+                      <motion.span
+                        key={rx.id}
+                        initial={{ opacity: 0, y: 12, scale: 0.9 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="absolute text-2xl"
+                        style={{ left: `${(rx.ts % 75) + 8}%`, top: `${(rx.id.length * 9) % 55}%` }}
+                      >
+                        {rx.emoji}
+                      </motion.span>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-12">
+              <Card className="p-5 lg:col-span-4 sm:p-6">
                 <CardTitle>Polls</CardTitle>
                 <CardDescription>Timed questions — XP on close (admin).</CardDescription>
                 <div className="mt-4 space-y-3">
@@ -486,14 +496,14 @@ export default function MatchPage() {
                 </div>
               </Card>
 
-              <Card>
+              <Card className="p-5 lg:col-span-4 sm:p-6">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
                   Player compare
                 </CardTitle>
                 <CardDescription>
                   {aiStatus?.configured
-                    ? `Gemini (${aiStatus.model ?? 'model'}) — compare uses your match JSON + recent balls.`
+                    ? `Gemini (${aiStatus.model ?? 'model'}) uses this match and recent balls as context.`
                     : 'Offline compare heuristics — set GEMINI_API_KEY on the backend for Gemini-grounded bullets.'}
                 </CardDescription>
                 <div className="mt-3 space-y-2">
@@ -522,12 +532,12 @@ export default function MatchPage() {
                 </div>
               </Card>
 
-              <Card>
+              <Card className="p-5 lg:col-span-4 sm:p-6">
                 <CardTitle>Match digest</CardTitle>
                 <CardDescription>
                   {aiStatus?.configured
-                    ? `Live Gemini (${aiStatus.model ?? ''}) on your CricAPI match + commentary.`
-                    : 'Offline digest from commentary + match card — add GEMINI_API_KEY for full Gemini summaries and cards.'}
+                    ? `Gemini (${aiStatus.model ?? ''}) summary from this match and commentary.`
+                    : 'Offline digest from commentary and the match card — add GEMINI_API_KEY for full Gemini summaries and cards.'}
                 </CardDescription>
                 {aiError ? (
                   <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
@@ -569,10 +579,9 @@ export default function MatchPage() {
                 ) : null}
                 {!aiError && !aiPack ? <p className="mt-3 text-sm text-ink-500 dark:text-ink-400">Loading AI digest…</p> : null}
               </Card>
-            </div>
           </div>
 
-          <Card className="mt-4">
+          <Card className="mt-4 p-5 sm:p-6">
             <div className="flex items-center justify-between gap-2">
               <CardTitle>Fan chat</CardTitle>
               {typing.length > 0 && <span className="text-xs text-ink-500 dark:text-ink-400">{typing.join(', ')} typing…</span>}

@@ -71,10 +71,10 @@ function SpotlightCard({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.06, duration: 0.35 }}
-      className="group relative overflow-hidden rounded-2xl border border-ink-200/90 bg-gradient-to-b from-white to-ink-50/80 p-5 shadow-soft dark:border-ink-700/90 dark:from-ink-900/90 dark:to-ink-950/80 dark:shadow-soft-lg"
+      className="group relative overflow-hidden rounded-2xl border border-ink-200/90 bg-gradient-to-b from-white to-ink-50/80 p-5 dark:border-ink-700/90 dark:from-ink-900/90 dark:to-ink-950/80"
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-ink-900/5 blur-2xl transition-opacity group-hover:opacity-100 dark:bg-white/10" />
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-white text-ink-900 shadow-sm dark:border-ink-600 dark:bg-ink-800 dark:text-ink-50">
+      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200/90 bg-white text-ink-900 dark:border-ink-600 dark:bg-ink-800 dark:text-ink-50">
         <Icon className="h-5 w-5" aria-hidden />
       </div>
       <h3 className="text-base font-semibold tracking-tight text-ink-900 dark:text-ink-50">{title}</h3>
@@ -109,7 +109,7 @@ function CapabilityExplorer({ tabs }: { tabs: CapabilityTab[] }) {
               className={cn(
                 'inline-flex shrink-0 items-center gap-2 rounded-full border px-4 py-2 text-sm font-medium transition',
                 isOn
-                  ? 'border-ink-900 bg-ink-900 text-white shadow-soft dark:border-ink-100 dark:bg-ink-100 dark:text-ink-950'
+                  ? 'border-ink-900 bg-ink-900 text-white dark:border-ink-100 dark:bg-ink-100 dark:text-ink-950'
                   : 'border-ink-200/90 bg-white/70 text-ink-700 hover:border-ink-300 hover:bg-white dark:border-ink-700 dark:bg-ink-900/60 dark:text-ink-200 dark:hover:border-ink-500'
               )}
             >
@@ -145,7 +145,7 @@ function CapabilityExplorer({ tabs }: { tabs: CapabilityTab[] }) {
           </div>
 
           <details className="group mt-10 rounded-2xl border border-ink-200/80 bg-white/50 open:bg-white/80 dark:border-ink-800/80 dark:bg-ink-900/30 dark:open:bg-ink-900/50">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-medium text-ink-900 outline-none ring-offset-2 transition hover:bg-ink-50/80 dark:text-ink-50 dark:hover:bg-ink-800/40 [&::-webkit-details-marker]:hidden">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 rounded-2xl px-5 py-4 text-sm font-medium text-ink-900 outline-none transition hover:bg-ink-50/80 dark:text-ink-50 dark:hover:bg-ink-800/40 [&::-webkit-details-marker]:hidden">
               <span>Full checklist in this area</span>
               <ChevronDown className="h-4 w-4 shrink-0 text-ink-500 transition group-open:rotate-180 dark:text-ink-400" aria-hidden />
             </summary>
@@ -437,7 +437,7 @@ export default function LandingPage() {
           <div className={cn('relative pb-20', siteInShell)}>
             <div className="grid items-center gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(280px,400px)]">
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
-                <p className="scroll-reveal mb-6 inline-flex items-center gap-2 rounded-full border border-ink-200 bg-white/80 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink-500 shadow-soft backdrop-blur dark:border-ink-800 dark:bg-ink-900/60 dark:text-ink-400">
+                <p className="scroll-reveal mb-6 inline-flex items-center gap-2 rounded-full border border-ink-200/90 bg-white/80 px-4 py-2 text-xs font-medium uppercase tracking-[0.2em] text-ink-500 backdrop-blur dark:border-ink-800 dark:bg-ink-900/60 dark:text-ink-400">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink-900 opacity-25 dark:bg-ink-50" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-ink-900 dark:bg-ink-50" />
@@ -491,7 +491,7 @@ export default function LandingPage() {
                 transition={{ duration: 0.55, delay: 0.12 }}
                 className="scroll-reveal relative hidden lg:block"
               >
-                <div className="glass-panel relative overflow-hidden p-6 shadow-soft-lg">
+                <div className="glass-panel relative overflow-hidden p-6">
                   <div className="flex items-center justify-between text-xs font-medium uppercase tracking-wider text-ink-500 dark:text-ink-400">
                     <span className="flex items-center gap-2">
                       <span className="h-2 w-2 animate-pulse rounded-full bg-ink-900 dark:bg-ink-100" />
@@ -595,7 +595,7 @@ export default function LandingPage() {
             <div className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               <Link
                 href="/matches"
-                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-300 hover:shadow-soft dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-600"
+                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-400 dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-500"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-ink-50 dark:border-ink-700 dark:bg-ink-900">
                   <Tv className="h-5 w-5 text-ink-700 dark:text-ink-200" />
@@ -608,7 +608,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/features"
-                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-300 hover:shadow-soft dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-600"
+                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-400 dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-500"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-ink-50 dark:border-ink-700 dark:bg-ink-900">
                   <Target className="h-5 w-5 text-ink-700 dark:text-ink-200" />
@@ -621,7 +621,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/leaderboards"
-                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-300 hover:shadow-soft dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-600"
+                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-400 dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-500"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-ink-50 dark:border-ink-700 dark:bg-ink-900">
                   <LineChart className="h-5 w-5 text-ink-700 dark:text-ink-200" />
@@ -634,7 +634,7 @@ export default function LandingPage() {
               </Link>
               <Link
                 href="/profile"
-                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-300 hover:shadow-soft dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-600"
+                className="group flex items-center gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-4 transition hover:border-ink-400 dark:border-ink-800 dark:bg-ink-950/50 dark:hover:border-ink-500"
               >
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl border border-ink-200 bg-ink-50 dark:border-ink-700 dark:bg-ink-900">
                   <Users className="h-5 w-5 text-ink-700 dark:text-ink-200" />

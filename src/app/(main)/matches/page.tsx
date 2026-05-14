@@ -13,6 +13,7 @@ import { LiveMatchCard } from '@/components/match/LiveMatchCard';
 import {
   filterMatchesByQuery,
   groupMatches,
+  sortMatchesLatestFirst,
   type LiveMatchesGroupMode,
 } from '@/lib/liveMatchesUi';
 
@@ -76,7 +77,8 @@ export default function MatchesPage() {
   const updatedAt = data?.updatedAt;
 
   const filtered = useMemo(() => filterMatchesByQuery(rawMatches ?? [], search), [rawMatches, search]);
-  const sections = useMemo(() => groupMatches(filtered, groupMode), [filtered, groupMode]);
+  const ordered = useMemo(() => sortMatchesLatestFirst(filtered), [filtered]);
+  const sections = useMemo(() => groupMatches(ordered, groupMode), [ordered, groupMode]);
 
   const totalCount = rawMatches?.length ?? 0;
 
@@ -140,7 +142,7 @@ export default function MatchesPage() {
               placeholder="Search teams, venue, status, series…"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-10 pr-4 text-sm text-ink-900 outline-none ring-ink-900/10 transition placeholder:text-ink-400 focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
+              className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus-visible:border-ink-900 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:focus-visible:border-ink-300"
               autoComplete="off"
             />
           </div>

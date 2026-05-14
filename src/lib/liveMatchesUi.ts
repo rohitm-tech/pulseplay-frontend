@@ -18,6 +18,25 @@ export function filterMatchesByQuery(matches: MatchSummary[], q: string): MatchS
   return matches.filter((m) => matchSearchBlob(m).includes(needle));
 }
 
+function parseMatchStartMs(date?: string): number | null {
+  const raw = date?.trim();
+  if (!raw) return null;
+  const t = new Date(raw).getTime();
+  return Number.isNaN(t) ? null : t;
+}
+
+/** Newest first by match date/time; undated last; tie-break on id (aligns with API ordering). */
+export function sortMatchesLatestFirst(matches: MatchSummary[]): MatchSummary[] {
+  return [...matches].sort((a, b) => {
+    const ta = parseMatchStartMs(a.date);
+    const tb = parseMatchStartMs(b.date);
+    if (ta != null && tb != null && ta !== tb) return tb - ta;
+    if (ta != null && tb == null) return -1;
+    if (ta == null && tb != null) return 1;
+    return (b.id ?? '').localeCompare(a.id ?? '');
+  });
+}
+
 /** Last comma-separated segment of the venue (often city / region / country). */
 export function venueRegionLabel(venue?: string): string {
   if (!venue?.trim()) return 'Venue TBC';
@@ -56,7 +75,8 @@ export type DateBucket = { sortKey: number; groupKey: string; heading: string };
 
 export function dateBucketFromMatch(date?: string): DateBucket {
   if (!date?.trim()) {
-    return { sortKey: Number.MAX_SAFE_INTEGER, groupKey: 'unknown', heading: 'Date not listed' };
+    /** Sorts last when date sections are ordered newest-first (see `groupMatches`). */
+    return { sortKey: Number.NEGATIVE_INFINITY, groupKey: 'unknown', heading: 'Date not listed' };
   }
   const raw = date.trim();
   const parsed = new Date(raw);
@@ -73,7 +93,7 @@ export function dateBucketFromMatch(date?: string): DateBucket {
     });
     return { sortKey: parsed.getTime(), groupKey, heading };
   }
-  return { sortKey: Number.MAX_SAFE_INTEGER - 1, groupKey: `raw:${raw}`, heading: raw };
+  return { sortKey: Number.NEGATIVE_INFINITY, groupKey: `raw:${raw}`, heading: raw };
 }
 
 export function groupMatches(matches: MatchSummary[], mode: LiveMatchesGroupMode): { heading: string; items: MatchSummary[] }[] {
@@ -135,7 +155,7 @@ export function groupMatches(matches: MatchSummary[], mode: LiveMatchesGroupMode
   const rows = [...map.entries()].map(([k, v]) => ({ key: k, ...v }));
 
   if (mode === 'date') {
-    rows.sort((a, b) => a.sort - b.sort);
+    rows.sort((a, b) => b.sort - a.sort || a.heading.localeCompare(b.heading));
   } else if (mode === 'gender') {
     rows.sort((a, b) => a.sort - b.sort || a.heading.localeCompare(b.heading));
   } else {

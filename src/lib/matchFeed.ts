@@ -139,6 +139,26 @@ export function localTimelineFromFeed(feed: FeedBall[]): { id: string; over: str
   return picks.slice(-16);
 }
 
+/** Human-readable line for parsed commentary events (never raw JSON). */
+export function formatCommentaryEventLabel(ev: unknown): string | null {
+  if (!ev || typeof ev !== 'object') return null;
+  const o = ev as Record<string, unknown>;
+  const type = typeof o.type === 'string' ? o.type : '';
+  if (!type || type === 'UNKNOWN') {
+    const raw = typeof o.raw === 'string' ? o.raw.trim() : '';
+    return raw.length > 0 ? raw.slice(0, 120) + (raw.length > 120 ? '…' : '') : null;
+  }
+  const bits: string[] = [type.replace(/_/g, ' ')];
+  const player = typeof o.player === 'string' ? o.player.trim() : '';
+  const bowler = typeof o.bowler === 'string' ? o.bowler.trim() : '';
+  const runs = typeof o.runs === 'number' && Number.isFinite(o.runs) ? o.runs : undefined;
+  if (player) bits.push(player);
+  if (bowler && type === 'WICKET') bits.push(`vs ${bowler}`);
+  else if (bowler && !player) bits.push(bowler);
+  if (runs != null && type !== 'WICKET') bits.push(`${runs} runs`);
+  return bits.join(' · ');
+}
+
 /** Cumulative match progression from scorecard rows (innings snapshots). */
 export function wormFromScorePayload(live: unknown): { over: string; runs: number }[] {
   if (!live || typeof live !== 'object') return [];

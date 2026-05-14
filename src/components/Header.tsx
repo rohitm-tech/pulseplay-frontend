@@ -62,7 +62,7 @@ export function Header({ className }: { className?: string }) {
     >
       <div className={siteHeaderInner}>
         <Link href="/" className="group flex items-center gap-2.5">
-          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-ink-200 bg-ink-900 text-sm font-bold text-ink-50 shadow-soft transition group-hover:scale-105 dark:border-ink-700 dark:bg-ink-50 dark:text-ink-950">
+          <span className="flex h-9 w-9 items-center justify-center rounded-xl border border-ink-200/90 bg-ink-900 text-sm font-bold text-ink-50 transition group-hover:scale-105 dark:border-ink-600 dark:bg-ink-50 dark:text-ink-950">
             P
           </span>
           <span className="text-lg font-semibold tracking-tight text-ink-900 dark:text-ink-50">PulsePlay</span>
@@ -125,7 +125,7 @@ export function Header({ className }: { className?: string }) {
                 ) : null}
               </Button>
               {notifOpen ? (
-                <div className="absolute right-0 z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-ink-200 bg-white p-2 text-left shadow-soft dark:border-ink-800 dark:bg-ink-950">
+                <div className="absolute right-0 z-50 mt-2 w-80 max-h-96 overflow-y-auto rounded-2xl border border-ink-200/90 bg-white p-2 text-left dark:border-ink-700 dark:bg-ink-950">
                   {(notifications.data?.items ?? []).length === 0 ? (
                     <p className="px-2 py-4 text-sm text-ink-500">No notifications yet.</p>
                   ) : (

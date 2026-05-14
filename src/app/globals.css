@@ -77,11 +77,11 @@ textarea::placeholder {
 
 /* Glass panels — monochrome */
 .glass-panel {
-  @apply rounded-2xl border border-ink-200/80 bg-white/70 shadow-soft backdrop-blur-xl dark:border-ink-800/80 dark:bg-ink-950/55 dark:shadow-soft-lg;
+  @apply rounded-2xl border border-ink-200/90 bg-white/70 backdrop-blur-xl dark:border-ink-800/90 dark:bg-ink-950/55;
 }
 
 .glass-panel-interactive {
-  @apply glass-panel transition duration-300 ease-out hover:-translate-y-0.5 hover:border-ink-300 hover:shadow-soft-lg dark:hover:border-ink-600;
+  @apply glass-panel transition duration-300 ease-out hover:-translate-y-0.5 hover:border-ink-300 dark:hover:border-ink-600;
 }
 
 .text-gradient {

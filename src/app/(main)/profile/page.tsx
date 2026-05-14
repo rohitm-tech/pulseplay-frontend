@@ -50,10 +50,16 @@ export default function ProfilePage() {
   return (
     <AuthGate>
       <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
-        <PageContainer column="readable">
-          <Card>
-            <CardTitle>Profile</CardTitle>
-            <CardDescription>Personalization, notification prefs, and fan tier from XP.</CardDescription>
+        <PageContainer>
+          <p className="text-xs font-medium uppercase tracking-[0.25em] text-ink-500 dark:text-ink-400">Account</p>
+          <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Profile</h1>
+          <p className="mt-2 max-w-2xl text-sm text-ink-600 dark:text-ink-400">
+            Personalization, notification prefs, and fan tier from XP.
+          </p>
+
+          <Card className="mt-10">
+            <CardTitle>Details</CardTitle>
+            <CardDescription>Name, favorites, and in-app alert toggles.</CardDescription>
 
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               <div>

@@ -19,7 +19,7 @@ export function LiveMatchCard({ match: m, index }: LiveMatchCardProps) {
     >
       <Link
         href={`/match/${m.id}`}
-        className="group flex min-h-full min-w-0 flex-col gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-5 shadow-soft backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-ink-400 hover:shadow-soft-lg dark:border-ink-800/80 dark:bg-ink-950/55 dark:hover:border-ink-500 sm:p-6"
+        className="group flex min-h-full min-w-0 flex-col gap-3 rounded-2xl border border-ink-200/80 bg-white/80 p-5 backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-ink-400 dark:border-ink-800/80 dark:bg-ink-950/55 dark:hover:border-ink-500 sm:p-6"
       >
         <div className="min-w-0 space-y-2">
           <h2 className="text-balance break-words text-lg font-semibold leading-snug text-ink-900 transition group-hover:text-ink-950 dark:text-ink-50 dark:group-hover:text-white">

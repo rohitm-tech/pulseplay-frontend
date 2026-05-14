@@ -26,7 +26,7 @@ export default function LeaderboardsPage() {
         <PageContainer>
           <h1 className="text-3xl font-semibold tracking-tight text-ink-900 dark:text-ink-50">Leaderboards</h1>
           <p className="mt-2 text-sm text-ink-600 dark:text-ink-400">XP, correct calls, and streaks — high contrast table.</p>
-          <div className="mt-8 overflow-hidden rounded-2xl border border-ink-200 bg-white shadow-soft dark:border-ink-800 dark:bg-ink-900/40">
+          <div className="mt-8 overflow-hidden rounded-2xl border border-ink-200/90 bg-white dark:border-ink-800/90 dark:bg-ink-900/40">
             <table className="w-full text-left text-sm">
               <thead className="border-b border-ink-200 bg-ink-50 text-xs font-semibold uppercase tracking-wide text-ink-500 dark:border-ink-800 dark:bg-ink-950/80 dark:text-ink-400">
                 <tr>
