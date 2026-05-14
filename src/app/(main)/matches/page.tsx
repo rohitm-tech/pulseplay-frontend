@@ -149,55 +149,81 @@ export default function MatchesPage() {
           </div>
         ) : null}
 
-        <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div className="relative w-full max-w-md">
-            <label htmlFor="matches-search" className="sr-only">
-              Search matches
-            </label>
-            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden />
-            <input
-              id="matches-search"
-              type="search"
-              placeholder="Search teams, venue, status, series…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus-visible:border-ink-900 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:focus-visible:border-ink-300"
-              autoComplete="off"
-            />
-          </div>
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Show</span>
-            <div className="flex flex-wrap gap-1.5">
-              {TIME_FILTER_OPTIONS.filter((opt) => opt.value !== 'upcoming' || hasUpcoming).map((opt) => (
-                <Button
-                  key={opt.value}
-                  type="button"
-                  size="sm"
-                  variant={timeFilter === opt.value ? 'default' : 'outline'}
-                  className="shrink-0"
-                  onClick={() => setTimeFilter(opt.value)}
-                >
-                  {opt.label}
-                </Button>
-              ))}
+        <div
+          className="mt-8 rounded-2xl border border-ink-200/80 bg-white/90 p-4 shadow-sm ring-1 ring-ink-950/[0.04] backdrop-blur-sm dark:border-ink-800/70 dark:bg-ink-900/50 dark:ring-white/[0.06] sm:p-5"
+          aria-label="Search and filters"
+        >
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:gap-5">
+            <div className="relative w-full shrink-0 lg:w-[min(100%,20rem)]">
+              <label htmlFor="matches-search" className="sr-only">
+                Search matches
+              </label>
+              <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden />
+              <input
+                id="matches-search"
+                type="search"
+                placeholder="Search teams, venue, status, series…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="h-10 w-full rounded-xl border border-ink-200 bg-white py-0 pl-10 pr-4 text-sm text-ink-900 outline-none transition placeholder:text-ink-400 focus-visible:border-ink-900 focus-visible:ring-2 focus-visible:ring-ink-900/15 dark:border-ink-700 dark:bg-ink-950 dark:text-ink-50 dark:placeholder:text-ink-500 dark:focus-visible:border-ink-300 dark:focus-visible:ring-ink-300/20"
+                autoComplete="off"
+              />
             </div>
-          </div>
-          <div className="flex min-w-0 flex-col gap-2">
-            <span className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Group by</span>
-            <div className="flex flex-wrap gap-1.5">
-              {GROUP_OPTIONS.map((opt) => (
-                <Button
-                  key={opt.value}
-                  type="button"
-                  size="sm"
-                  variant={groupMode === opt.value ? 'default' : 'outline'}
-                  className="shrink-0"
-                  title={opt.hint}
-                  onClick={() => setGroupMode(opt.value)}
+
+            <div className="flex min-h-10 min-w-0 flex-1 flex-col gap-3 lg:flex-row lg:items-center lg:gap-4">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <span className="w-10 shrink-0 text-right text-[10px] font-semibold uppercase leading-tight tracking-wider text-ink-500 dark:text-ink-400">
+                  Show
+                </span>
+                <div
+                  role="group"
+                  aria-label="Show matches"
+                  className="scrollbar-thin flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1"
                 >
-                  {opt.label}
-                </Button>
-              ))}
+                  {TIME_FILTER_OPTIONS.filter((opt) => opt.value !== 'upcoming' || hasUpcoming).map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      size="sm"
+                      variant={timeFilter === opt.value ? 'default' : 'outline'}
+                      className="shrink-0 whitespace-nowrap"
+                      onClick={() => setTimeFilter(opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <div
+                className="hidden h-8 w-px shrink-0 self-center bg-ink-200 dark:bg-ink-700 lg:block"
+                aria-hidden
+              />
+
+              <div className="flex min-w-0 flex-1 items-center gap-3 lg:min-w-[12rem] lg:flex-[1.35]">
+                <span className="w-10 shrink-0 text-right text-[10px] font-semibold uppercase leading-tight tracking-wider text-ink-500 dark:text-ink-400">
+                  Group
+                </span>
+                <div
+                  role="group"
+                  aria-label="Group by"
+                  className="scrollbar-thin flex flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain pb-0.5 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1"
+                >
+                  {GROUP_OPTIONS.map((opt) => (
+                    <Button
+                      key={opt.value}
+                      type="button"
+                      size="sm"
+                      variant={groupMode === opt.value ? 'default' : 'outline'}
+                      className="shrink-0 whitespace-nowrap"
+                      title={opt.hint}
+                      onClick={() => setGroupMode(opt.value)}
+                    >
+                      {opt.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </div>
