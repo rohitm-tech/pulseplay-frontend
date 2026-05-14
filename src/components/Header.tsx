@@ -98,17 +98,6 @@ export function Header({ className }: { className?: string }) {
         </nav>
 
         <div className="flex items-center gap-2">
-          <Link
-            href="/matches"
-            className="hidden items-center gap-2 rounded-full border border-ink-200 bg-ink-50 px-3 py-1.5 text-xs font-medium text-ink-800 transition hover:border-ink-300 sm:inline-flex dark:border-ink-700 dark:bg-ink-900 dark:text-ink-100 dark:hover:border-ink-500"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-ink-900 opacity-30 dark:bg-ink-50" />
-              <span className="relative inline-flex h-2 w-2 rounded-full bg-ink-900 dark:bg-ink-50" />
-            </span>
-            IPL
-          </Link>
-
           {token ? (
             <div className="relative hidden md:block">
               <Button
@@ -164,9 +153,6 @@ export function Header({ className }: { className?: string }) {
           <div className="hidden items-center gap-2 md:flex">
             {token ? (
               <>
-                <Link href="/matches">
-                  <Button size="sm">Arena</Button>
-                </Link>
                 <Button type="button" size="sm" variant="outline" className="gap-1.5" onClick={handleLogout}>
                   <LogOut className="h-3.5 w-3.5" />
                   Log out
@@ -215,7 +201,7 @@ export function Header({ className }: { className?: string }) {
               ))}
             <Link href="/matches" className="mt-2" onClick={() => setOpen(false)}>
               <Button className="w-full" size="sm">
-                {token ? 'Open arena' : 'Browse matches'}
+                Browse matches
               </Button>
             </Link>
             {token && (

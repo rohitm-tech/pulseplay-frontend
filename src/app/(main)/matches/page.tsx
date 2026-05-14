@@ -26,17 +26,18 @@ async function fetchLiveMatches(forYou: boolean): Promise<{ matches: MatchSummar
 }
 
 const GROUP_OPTIONS: { value: LiveMatchesGroupMode; label: string; hint: string }[] = [
-  { value: 'none', label: 'List', hint: 'Single grid, no sections' },
+  { value: 'none', label: 'List', hint: 'Single grid — every match' },
   { value: 'date', label: 'Date', hint: 'Group by match day' },
   { value: 'series', label: 'Series', hint: 'From the tail of the match title' },
   { value: 'gender', label: 'Gender', hint: "Inferred from Men's / Women's in the title" },
   { value: 'venueRegion', label: 'Region', hint: 'Last segment of the venue line' },
+  { value: 'india', label: 'India', hint: 'India vs international — default view' },
 ];
 
 export default function MatchesPage() {
   const [forYou, setForYou] = useState(false);
   const [search, setSearch] = useState('');
-  const [groupMode, setGroupMode] = useState<LiveMatchesGroupMode>('date');
+  const [groupMode, setGroupMode] = useState<LiveMatchesGroupMode>('india');
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const queryClient = useQueryClient();
 
