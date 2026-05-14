@@ -1,16 +1,20 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import Link from 'next/link';
-import { motion } from 'framer-motion';
 import { isAxiosError } from 'axios';
-import { RefreshCw } from 'lucide-react';
+import { RefreshCw, Search } from 'lucide-react';
 import { PageContainer } from '@/components/layout/PageContainer';
 import { Button } from '@/components/ui/button';
 import api from '@/lib/api';
 import type { MatchSummary } from '@/store/matches/matchesSlice';
 import { useAppSelector } from '@/store/hooks';
+import { LiveMatchCard } from '@/components/match/LiveMatchCard';
+import {
+  filterMatchesByQuery,
+  groupMatches,
+  type LiveMatchesGroupMode,
+} from '@/lib/liveMatchesUi';
 
 type LiveMatchesResponse = { data: MatchSummary[]; updatedAt?: string | null };
 
@@ -20,8 +24,18 @@ async function fetchLiveMatches(forYou: boolean): Promise<{ matches: MatchSummar
   return { matches: res.data.data, updatedAt: res.data.updatedAt ?? null };
 }
 
+const GROUP_OPTIONS: { value: LiveMatchesGroupMode; label: string; hint: string }[] = [
+  { value: 'none', label: 'List', hint: 'Single grid, no sections' },
+  { value: 'date', label: 'Date', hint: 'Group by match day' },
+  { value: 'series', label: 'Series', hint: 'From the tail of the match title' },
+  { value: 'gender', label: 'Gender', hint: "Inferred from Men's / Women's in the title" },
+  { value: 'venueRegion', label: 'Region', hint: 'Last segment of the venue line' },
+];
+
 export default function MatchesPage() {
   const [forYou, setForYou] = useState(false);
+  const [search, setSearch] = useState('');
+  const [groupMode, setGroupMode] = useState<LiveMatchesGroupMode>('date');
   const accessToken = useAppSelector((s) => s.auth.accessToken);
   const queryClient = useQueryClient();
 
@@ -58,8 +72,13 @@ export default function MatchesPage() {
         ? refreshMutation.error.message
         : null;
 
-  const matches = data?.matches ?? [];
+  const rawMatches = data?.matches;
   const updatedAt = data?.updatedAt;
+
+  const filtered = useMemo(() => filterMatchesByQuery(rawMatches ?? [], search), [rawMatches, search]);
+  const sections = useMemo(() => groupMatches(filtered, groupMode), [filtered, groupMode]);
+
+  const totalCount = rawMatches?.length ?? 0;
 
   return (
     <div className="min-h-screen bg-ink-50 dark:bg-ink-950">
@@ -109,38 +128,73 @@ export default function MatchesPage() {
           </div>
         ) : null}
 
-        {!isLoading && !isError && matches.length === 0 ? (
+        <div className="mt-8 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div className="relative w-full max-w-md">
+            <label htmlFor="matches-search" className="sr-only">
+              Search matches
+            </label>
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-400" aria-hidden />
+            <input
+              id="matches-search"
+              type="search"
+              placeholder="Search teams, venue, status, series…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-xl border border-ink-200 bg-white py-2.5 pl-10 pr-4 text-sm text-ink-900 outline-none ring-ink-900/10 transition placeholder:text-ink-400 focus:ring-2 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-50 dark:ring-ink-50/10"
+              autoComplete="off"
+            />
+          </div>
+          <div className="flex min-w-0 flex-col gap-2">
+            <span className="text-xs font-medium uppercase tracking-wide text-ink-500 dark:text-ink-400">Group by</span>
+            <div className="flex flex-wrap gap-1.5">
+              {GROUP_OPTIONS.map((opt) => (
+                <Button
+                  key={opt.value}
+                  type="button"
+                  size="sm"
+                  variant={groupMode === opt.value ? 'default' : 'outline'}
+                  className="shrink-0"
+                  title={opt.hint}
+                  onClick={() => setGroupMode(opt.value)}
+                >
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {!isLoading && !isError && totalCount === 0 ? (
           <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">
             No matches in the database yet. Click “Refresh from API” to fetch the current list from CricAPI and store it.
           </p>
         ) : null}
 
-        <div className="mt-10 grid gap-4 md:grid-cols-2">
+        {!isLoading && !isError && totalCount > 0 && filtered.length === 0 ? (
+          <p className="mt-8 text-sm text-ink-600 dark:text-ink-400">No matches match your search. Try another team or keyword.</p>
+        ) : null}
+
+        <div className="mt-10 space-y-12">
           {isLoading &&
             Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-36 animate-pulse rounded-2xl border border-ink-200/60 bg-ink-100/80 dark:border-ink-800/60 dark:bg-ink-900/40" />
             ))}
-          {matches.map((m, idx) => (
-            <motion.div key={m.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <Link
-                href={`/match/${m.id}`}
-                className="group block rounded-2xl border border-ink-200/80 bg-white/80 p-6 shadow-soft backdrop-blur transition duration-300 hover:-translate-y-1 hover:border-ink-400 hover:shadow-soft-lg dark:border-ink-800/80 dark:bg-ink-950/55 dark:hover:border-ink-500"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <h2 className="text-lg font-semibold text-ink-900 transition group-hover:text-ink-950 dark:text-ink-50 dark:group-hover:text-white">
-                    {m.name}
+
+          {!isLoading &&
+            sections.map((section) => (
+              <section key={section.heading || 'all'} className="min-w-0">
+                {section.heading ? (
+                  <h2 className="mb-4 border-b border-ink-200/80 pb-2 text-sm font-semibold uppercase tracking-[0.12em] text-ink-600 dark:border-ink-700/80 dark:text-ink-300">
+                    {section.heading}
                   </h2>
-                  <span className="shrink-0 rounded-full border border-ink-200 bg-ink-50 px-3 py-1 text-xs font-medium text-ink-700 dark:border-ink-700 dark:bg-ink-900 dark:text-ink-200">
-                    {m.status}
-                  </span>
-                </div>
-                {m.venue && <p className="mt-3 text-sm text-ink-500 dark:text-ink-400">{m.venue}</p>}
-                <p className="mt-4 text-xs font-medium uppercase tracking-wide text-ink-400 opacity-0 transition group-hover:opacity-100 dark:text-ink-500">
-                  Open match room →
-                </p>
-              </Link>
-            </motion.div>
-          ))}
+                ) : null}
+                <ul className="grid list-none grid-cols-1 gap-4 lg:grid-cols-2">
+                  {section.items.map((m, idx) => (
+                    <LiveMatchCard key={m.id} match={m} index={idx} />
+                  ))}
+                </ul>
+              </section>
+            ))}
         </div>
       </PageContainer>
     </div>

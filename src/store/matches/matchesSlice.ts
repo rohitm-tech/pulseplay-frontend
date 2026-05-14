@@ -7,6 +7,7 @@ export interface MatchSummary {
   venue?: string;
   date?: string;
   teams?: string[];
+  teamInfo?: Record<string, { name: string; shortname?: string }>;
   score?: unknown[];
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,10 +18,37 @@ import { setMessages } from '@/store/chat/chatSlice';
 import { setLeaderboard } from '@/store/leaderboard/leaderboardSlice';
 import { usePulseSockets } from '@/hooks/usePulseSockets';
 import api from '@/lib/api';
+import {
+  localMomentumFromFeed,
+  localTimelineFromFeed,
+  rowsFromLiveScoreSocket,
+  teamNamesFromMatch,
+  winLeanFromStatus,
+  wormFromScorePayload,
+} from '@/lib/matchFeed';
 import { isAxiosError } from 'axios';
-import { WormChart } from '@/components/match/WormChart';
-import { MomentumChart } from '@/components/match/MomentumChart';
 import { MatchTimeline } from '@/components/match/MatchTimeline';
+
+/** Recharts pulls browser-only deps; load client-only to avoid App Router / webpack `__webpack_modules__[moduleId] is not a function` during prerender. */
+const WormChart = dynamic(
+  () => import('@/components/match/WormChart').then((m) => ({ default: m.WormChart })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-48 w-full animate-pulse rounded-xl border border-ink-200/60 bg-ink-100/80 dark:border-ink-800/60 dark:bg-ink-900/50" />
+    ),
+  }
+);
+
+const MomentumChart = dynamic(
+  () => import('@/components/match/MomentumChart').then((m) => ({ default: m.MomentumChart })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-44 w-full animate-pulse rounded-xl border border-ink-200/60 bg-ink-100/80 dark:border-ink-800/60 dark:bg-ink-900/50" />
+    ),
+  }
+);
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardDescription, CardTitle } from '@/components/ui/card';
@@ -71,6 +99,7 @@ export default function MatchPage() {
   useQuery({
     queryKey: ['commentary', matchId],
     enabled: !!matchId,
+    refetchInterval: (q) => (Array.isArray(q.state.data) && q.state.data.length === 0 ? 25_000 : false),
     queryFn: async () => {
       const res = await api.get<{ data: typeof commentary }>(`/api/matches/${matchId}/commentary`);
       dispatch(setCommentary(res.data.data));
@@ -88,10 +117,19 @@ export default function MatchPage() {
     },
   });
 
+  const { data: aiStatus } = useQuery({
+    queryKey: ['ai-status'],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const res = await api.get<{ data: { configured: boolean; model: string | null } }>('/api/ai/status');
+      return res.data.data;
+    },
+  });
+
   const { data: aiPack, isError: aiError, error: aiQueryError } = useQuery({
     queryKey: ['ai', matchId],
     enabled: !!matchId,
-    retry: false,
+    retry: 1,
     queryFn: async () => {
       const res = await api.get<{ data: MatchAiPack }>(`/api/ai/match/${matchId}`);
       return res.data.data;
@@ -128,7 +166,11 @@ export default function MatchPage() {
   const { data: analytics } = useQuery({
     queryKey: ['analytics', matchId],
     enabled: !!matchId,
-    refetchInterval: 60_000,
+    refetchInterval: (q) => {
+      const d = q.state.data as { momentum?: unknown[] } | undefined;
+      if (!d || !Array.isArray(d.momentum) || d.momentum.length === 0) return 30_000;
+      return 60_000;
+    },
     queryFn: async () => {
       const res = await api.get<{
         data: {
@@ -141,7 +183,34 @@ export default function MatchPage() {
     },
   });
 
+  const feedCommentary = useMemo(() => {
+    if (commentary.length) return commentary;
+    return rowsFromLiveScoreSocket(matchId, liveScore, detail?.status);
+  }, [commentary, matchId, liveScore, detail?.status]);
+
+  const clientMomentum = useMemo(() => localMomentumFromFeed(feedCommentary), [feedCommentary]);
+  const clientTimeline = useMemo(() => localTimelineFromFeed(feedCommentary), [feedCommentary]);
+
+  const displayWinProb = useMemo(() => {
+    if (analytics?.winProbability) return analytics.winProbability;
+    const fromStatus = winLeanFromStatus(detail, liveScore);
+    if (fromStatus) return fromStatus;
+    if (!feedCommentary.length) return null;
+    const { a, b } = teamNamesFromMatch(detail);
+    return {
+      teamA: a,
+      teamB: b,
+      pTeamA: 0.5,
+      pTeamB: 0.5,
+      note: 'Heuristic idle — ball probabilities need CricAPI commentary; scorecard rows are shown below.',
+    };
+  }, [analytics?.winProbability, detail, liveScore, feedCommentary.length]);
+
   const wormPoints = useMemo(() => {
+    const fromLive = wormFromScorePayload(liveScore);
+    if (fromLive.length) return fromLive;
+    const fromCard = wormFromScorePayload({ score: detail?.score });
+    if (fromCard.length) return fromCard;
     let acc = 0;
     return commentary.map((c, i) => {
       const ev = c.event as { runs?: number } | undefined;
@@ -155,7 +224,7 @@ export default function MatchPage() {
               : 1;
       return { over: c.over || String(i), runs: acc };
     });
-  }, [commentary]);
+  }, [liveScore, detail?.score, commentary]);
 
   const [chatInput, setChatInput] = useState('');
   const [compareA, setCompareA] = useState('');
@@ -190,7 +259,7 @@ export default function MatchPage() {
     if (!compareA.trim() || !compareB.trim()) return;
     setCompareLoading(true);
     try {
-      const ctx = JSON.stringify({ match: detail, recent: commentary.slice(-12).map((c) => c.text) });
+      const ctx = JSON.stringify({ match: detail, recent: feedCommentary.slice(-12).map((c) => c.text) });
       const res = await api.post<{ data: { comparison: string[] } }>('/api/ai/compare-players', {
         playerA: compareA.trim(),
         playerB: compareB.trim(),
@@ -206,8 +275,14 @@ export default function MatchPage() {
 
   async function explainBall(text: string) {
     try {
-      const res = await api.post<{ data: { explanation: string } }>('/api/ai/what-happened', { text });
-      toast.message('What happened?', { description: res.data.data.explanation, duration: 12_000 });
+      const wicketish = /\b(wicket|bowled|lbw|caught|stumped|run out)\b/i.test(text);
+      const res = wicketish
+        ? await api.post<{ data: { explanation: string } }>('/api/ai/explain-wicket', { text })
+        : await api.post<{ data: { explanation: string } }>('/api/ai/what-happened', { text });
+      toast.message(wicketish ? 'Wicket explainer' : 'What happened?', {
+        description: res.data.data.explanation,
+        duration: 12_000,
+      });
     } catch (e) {
       toast.error(axiosMessage(e));
     }
@@ -269,7 +344,14 @@ export default function MatchPage() {
               </motion.pre>
               <div className="mt-6">
                 <h3 className="text-sm font-semibold text-ink-800 dark:text-ink-200">Run worm</h3>
-                <WormChart points={wormPoints.length ? wormPoints : [{ over: '0', runs: 0 }]} />
+                <motion.div
+                  key={JSON.stringify(wormPoints)}
+                  initial={{ opacity: 0.88 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.35 }}
+                >
+                  <WormChart points={wormPoints.length ? wormPoints : [{ over: '0', runs: 0 }]} />
+                </motion.div>
               </div>
             </Card>
 
@@ -277,30 +359,38 @@ export default function MatchPage() {
               <CardTitle>Live analytics</CardTitle>
               <CardDescription>Heuristic momentum, key-event timeline, and rough win lean from recent balls.</CardDescription>
               <div className="mt-4 space-y-4">
-                {analytics?.winProbability ? (
+                {displayWinProb ? (
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Win lean</p>
                     <div className="mt-2 flex h-3 overflow-hidden rounded-full bg-ink-200 dark:bg-ink-800">
                       <div
                         className="bg-ink-900 dark:bg-ink-100"
-                        style={{ width: `${Math.round(analytics.winProbability.pTeamA * 100)}%` }}
+                        style={{ width: `${Math.round(displayWinProb.pTeamA * 100)}%` }}
                       />
                     </div>
                     <p className="mt-2 text-xs text-ink-600 dark:text-ink-400">
-                      {analytics.winProbability.teamA}: {(analytics.winProbability.pTeamA * 100).toFixed(0)}% ·{' '}
-                      {analytics.winProbability.teamB}: {(analytics.winProbability.pTeamB * 100).toFixed(0)}%
+                      {displayWinProb.teamA}: {(displayWinProb.pTeamA * 100).toFixed(0)}% · {displayWinProb.teamB}:{' '}
+                      {(displayWinProb.pTeamB * 100).toFixed(0)}%
                     </p>
-                    <p className="mt-1 text-xs text-ink-500 dark:text-ink-500">{analytics.winProbability.note}</p>
+                    <p className="mt-1 text-xs text-ink-500 dark:text-ink-500">{displayWinProb.note}</p>
                   </div>
                 ) : null}
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Momentum</p>
-                  <MomentumChart points={analytics?.momentum?.length ? analytics.momentum : [{ over: '0', score: 0 }]} />
+                  <MomentumChart
+                    points={
+                      analytics?.momentum?.length
+                        ? analytics.momentum
+                        : clientMomentum.length
+                          ? clientMomentum
+                          : [{ over: '0', score: 0 }]
+                    }
+                  />
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-wide text-ink-500 dark:text-ink-400">Key moments</p>
                   <div className="mt-2 max-h-48 overflow-y-auto pr-1">
-                    <MatchTimeline items={analytics?.timeline ?? []} />
+                    <MatchTimeline items={analytics?.timeline?.length ? analytics.timeline : clientTimeline} />
                   </div>
                 </div>
               </div>
@@ -345,10 +435,15 @@ export default function MatchPage() {
               <CardTitle>Commentary</CardTitle>
               <CardDescription>Structured events from the normalization engine.</CardDescription>
               <div className="mt-4 max-h-[420px] space-y-3 overflow-y-auto pr-2 scrollbar-thin">
-                {commentary.length === 0 ? (
+                {feedCommentary.length === 0 ? (
                   <p className="text-sm text-ink-500 dark:text-ink-400">No ball-by-ball lines yet for this match (or CricAPI has no feed).</p>
                 ) : null}
-                {commentary.map((c) => (
+                {commentary.length === 0 && feedCommentary.length > 0 ? (
+                  <p className="rounded-lg border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-xs text-amber-950 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+                    Showing lines derived from the live score socket until REST commentary fills in.
+                  </p>
+                ) : null}
+                {feedCommentary.map((c) => (
                   <div
                     key={c.id}
                     className="rounded-xl border border-ink-200/80 bg-white/60 p-3 text-sm dark:border-ink-800/80 dark:bg-ink-900/40"
@@ -396,7 +491,11 @@ export default function MatchPage() {
                   <Sparkles className="h-4 w-4" />
                   Player compare
                 </CardTitle>
-                <CardDescription>Gemini — grounded in this match feed when you run compare.</CardDescription>
+                <CardDescription>
+                  {aiStatus?.configured
+                    ? `Gemini (${aiStatus.model ?? 'model'}) — compare uses your match JSON + recent balls.`
+                    : 'Offline compare heuristics — set GEMINI_API_KEY on the backend for Gemini-grounded bullets.'}
+                </CardDescription>
                 <div className="mt-3 space-y-2">
                   <input
                     value={compareA}
@@ -424,8 +523,12 @@ export default function MatchPage() {
               </Card>
 
               <Card>
-                <CardTitle>Gemini match digest</CardTitle>
-                <CardDescription>Summaries and highlights from your live CricAPI feed (same Gemini stack as HackAIBengaluru).</CardDescription>
+                <CardTitle>Match digest</CardTitle>
+                <CardDescription>
+                  {aiStatus?.configured
+                    ? `Live Gemini (${aiStatus.model ?? ''}) on your CricAPI match + commentary.`
+                    : 'Offline digest from commentary + match card — add GEMINI_API_KEY for full Gemini summaries and cards.'}
+                </CardDescription>
                 {aiError ? (
                   <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50/90 p-3 text-sm text-amber-950 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-100">
                     {axiosMessage(aiQueryError)}
